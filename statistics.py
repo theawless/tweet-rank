@@ -6,11 +6,13 @@ import matplotlib.pyplot as plt
 client = MongoClient()
 db = client['vegas']
 tweets = []
+tweet_ids = set()
 
-# TODO: Remove duplicates
 def loadTweets():
 	for tweet in db.tweets.find().sort('timestamp_ms', pymongo.ASCENDING):
-		tweets.append(tweet)
+		if tweet['id'] not in tweet_ids:
+			tweets.append(tweet)
+			tweet_ids.add(tweet['id'])
 
 # TODO: Implement spam filtering
 def isSpam(tweet):
@@ -18,7 +20,7 @@ def isSpam(tweet):
 
 def spamPercent(s):
 	total = s['spam'] + s['non_spam']
-	return (float(s['non_spam'])/total)*100
+	return (float(s['spam'])/total)*100
 
 # TODO: Show hours on time axis
 # Interval is in terms of seconds
@@ -87,5 +89,6 @@ def insertTweets():
 
 if __name__ == '__main__':
 	loadTweets()
-	spamDistribution(interval=1)
+	print(len(tweets))
+	# spamDistribution(interval=1)
 	# print(topTenHashTags())
