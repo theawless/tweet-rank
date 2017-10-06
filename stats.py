@@ -5,14 +5,41 @@ import matplotlib.pyplot as plt
 
 client = MongoClient()
 db = client['vegas']
+
 tweets = []
+users = []
+user_ids = set()
 tweet_ids = set()
 
+most_favorited_tweet = None
+most_retweeted_tweet = None
+
 def loadTweets():
+	global most_favorited_tweet, most_retweeted_tweet
 	for tweet in db.tweets.find().sort('timestamp_ms', pymongo.ASCENDING):
 		if tweet['id'] not in tweet_ids:
 			tweets.append(tweet)
 			tweet_ids.add(tweet['id'])
+			
+			#For computing most favorited/retweeted tweet
+			if most_favorited_tweet is None:
+				most_favorited_tweet = tweet
+			else:
+				if tweet['favorite_count'] > most_favorited_tweet['favorite_count']:
+					most_favorited_tweet = tweet
+
+			if most_retweeted_tweet is None:
+				most_retweeted_tweet = tweet
+			else:
+				if tweet['retweet_count'] > most_favorited_tweet['retweet_count']:
+					most_retweeted_tweet = tweet 
+
+			# Add user to user's list
+			user = tweet['user']
+			if user['id'] not in user_ids:
+				users.append(user)
+				user_ids.add(user['id'])
+
 
 # TODO: Implement filtering
 def isSpam(tweet):
@@ -77,18 +104,17 @@ def topTenHashTags():
 
 	return sorted(hash_tags.items(), key=lambda x:x[1], reverse=True)[:10]
 
+def tweetCount():
+	return len(tweets)
 
-def insertTweets():
-	with open('../data/tweets.json') as data:
-		sliced_tweets = []
-		tweets = data.readlines()
-		for tweet in tweets[:1000]:
-			sliced_tweets.append(loads(tweet))
-
-		db.tweets.insert_many(sliced_tweets)
+def userCount():
+	return len(users)
 
 if __name__ == '__main__':
 	loadTweets()
 	print(len(tweets))
+	print(len(users))
+	print(most_favorited_tweet['favorite_count'])
+	print(most_retweeted_tweet['retweet_count'])
 	# spamDistribution(interval=1)
 	# print(topTenHashTags())
