@@ -5,13 +5,14 @@ import matplotlib.pyplot as plt
 
 client = MongoClient()
 db = client['vegas']
-
 tweets = []
 
+# TODO: Remove duplicates
 def loadTweets():
-	for tweet in db.tweets.find().sort('created_at', pymongo.ASCENDING):
+	for tweet in db.tweets.find().sort('timestamp_ms', pymongo.ASCENDING):
 		tweets.append(tweet)
 
+# TODO: Implement spam filtering
 def isSpam(tweet):
 	return False
 
@@ -19,7 +20,9 @@ def spamPercent(s):
 	total = s['spam'] + s['non_spam']
 	return (float(s['non_spam'])/total)*100
 
-# interval is in terms of seconds
+# TODO: Show hours on time axis
+# Interval is in terms of seconds
+# Default interval is 60 seconds
 def spamDistribution(interval=60):
 	tweet_bins = []
 	INTERVAL = interval*1000
@@ -44,7 +47,7 @@ def spamDistribution(interval=60):
 			tweet_bins.append([bin_start, {'spam': 0, 'non_spam': 0}])
 			bin_start += INTERVAL
 
-	    # create a bin with the data
+	    # create a bin with the tweet
 		tweet_bins.append([bin_start, {'spam': int(isSpam(tweet)), 'non_spam': int(not isSpam(tweet))}])
 
 	print(tweet_bins)
@@ -58,17 +61,31 @@ def spamDistribution(interval=60):
 
 	plt.hist(x, len(x), weights=y)
 	plt.show()
-	
-# def insertTweets():
-# 	with open('tweets.json') as data:
-# 		sliced_tweets = []
-# 		tweets = data.readlines()
-# 		for tweet in tweets[:1000]:
-# 			sliced_tweets.append(loads(tweet))
 
-# 		db.tweets.insert_many(sliced_tweets)
+def topTenHashTags():
+	hash_tags = {}
+	for tweet in tweets:
+		if 'entities' in tweet:
+			for hash_tag in tweet['entities']['hashtags']:
+				h = hash_tag['text']
+				if h in hash_tags:
+					hash_tags[h] += 1
+				else:
+					hash_tags[h] = 1
 
+	return sorted(hash_tags.items(), key=lambda x:x[1], reverse=True)[:10]
+
+
+def insertTweets():
+	with open('../data/tweets.json') as data:
+		sliced_tweets = []
+		tweets = data.readlines()
+		for tweet in tweets[:1000]:
+			sliced_tweets.append(loads(tweet))
+
+		db.tweets.insert_many(sliced_tweets)
 
 if __name__ == '__main__':
 	loadTweets()
-	spamDistribution(interval=1)	
+	spamDistribution(interval=1)
+	# print(topTenHashTags())
