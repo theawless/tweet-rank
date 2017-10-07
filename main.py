@@ -9,13 +9,12 @@ from utils import filter_tweets
 tweets = filter_tweets(get_tweets())
 users = get_users()
 
-
 def init_graph():
     t2t_graph = init_tweet_graph(tweets)
     u2u_graph = init_user_graph(tweets, users)
     mix_graph = union(t2t_graph, u2u_graph)
 
-    for v in mix_graph.nodes.data(): print(v)
+    # for v in mix_graph.nodes.data(): print(v)
 
     return mix_graph
 

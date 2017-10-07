@@ -1,6 +1,7 @@
 import re
 import string
 
+import scipy.sparse
 from nltk import PorterStemmer, word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -35,10 +36,12 @@ def tokenize(text):
 stemmer = PorterStemmer()
 vectorizer = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
 
+def compute_tweet_sim_matrix(tweets):
+    tfidf = vectorizer.fit_transform(tweets)
+    sim_matrix = tfidf * tfidf.T
 
-def cosine_similarity(items1, items2):
-    tfidf = vectorizer.fit_transform([items1, items2])
-    return (tfidf * tfidf.T).A[0, 1]
+    # Return coo_matrix for fast iterations
+    return scipy.sparse.coo_matrix(sim_matrix)
 
 
 def filter_tweets(tweets):

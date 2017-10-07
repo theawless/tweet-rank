@@ -1,7 +1,8 @@
 from networkx import DiGraph, pagerank
 
-from utils import cosine_similarity
+from utils import compute_tweet_sim_matrix
 
+T_tt = 0.0
 
 def init_tweet_graph(tweets):
     t2t_graph = DiGraph()
@@ -60,7 +61,8 @@ def add_user_edges(graph, tweets):
 
 
 def add_tweet_edges(graph, tweets):
-    for tweet_i in tweets:
-        for tweet_j in tweets:
-            similarity = cosine_similarity(tweet_i["text"], tweet_j["text"])
-            graph.add_edge(tweet_i["id_str"], tweet_j["id_str"], weight=similarity)
+    similarity_matrix = compute_tweet_sim_matrix([tweet['text'] for tweet in tweets])
+    for i,j,v in zip(similarity_matrix.row, similarity_matrix.col, similarity_matrix.data):
+        if i < j and v > T_tt:
+            graph.add_edge(tweets[i]["id_str"], tweets[j]["id_str"], weight=v)
+            graph.add_edge(tweets[j]["id_str"], tweets[i]["id_str"], weight=v)
