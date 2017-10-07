@@ -8,6 +8,7 @@ install:
 
 setup:
 	mongoimport data/tweets.json  --collection tweets --db vegas
+	mongo vegas --eval 'db.tweets.createIndex({"timestamp_ms" : 1})'
 	python3 mongo.py
 
 main:

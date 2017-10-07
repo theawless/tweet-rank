@@ -8,7 +8,7 @@ users_collection = vegas_db.users
 
 
 def get_tweets():
-    tweets_cursor = tweets_collection.find().sort("timestamp_ms", pymongo.ASCENDING).limit(10)
+    tweets_cursor = tweets_collection.find().sort("timestamp_ms", pymongo.ASCENDING)
     tweets = list(tweets_cursor)
     return tweets
 
@@ -40,6 +40,18 @@ def save_users_from_tweets(tweets):
 
 def clean_tweets():
     tweets_collection.delete_many({"limit": {"$exists": "true"}})
+    tweets = get_tweets()
+    cleaned_tweets = {}
+    for tweet in tweets:
+        if not tweet["id_str"] in cleaned_tweets:
+            cleaned_tweets[tweet["id_str"]] = tweet
+
+        # retweet
+        if "retweeted_status" in tweet:
+            if not tweet["retweeted_status"]["id_str"] in cleaned_tweets:
+                cleaned_tweets[tweet["retweeted_status"]["id_str"]] = tweet["retweeted_status"]
+    tweets_collection.delete_many({})
+    tweets_collection.insert_many(cleaned_tweets.values())
 
 
 def get_users():
