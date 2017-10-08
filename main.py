@@ -1,30 +1,51 @@
-import matplotlib.pyplot as plot
-from networkx import union
-from networkx.drawing import draw
+from networkx import union, DiGraph
 
-from homo import init_tweet_graph, init_user_graph
-from mongo import get_tweets, get_users
-from utils import filter_tweets
+from network import add_tweet_user_edges, add_doc_tweet_edges
+from network import add_vertices, add_user_user_edges, add_item_item_edges
+from mongo import get_tweets, get_users, get_docs
+from utils import compute_pagerank
 
-tweets = filter_tweets(get_tweets())
+tweets = get_tweets()
 users = get_users()
+docs = get_docs()
 
-def init_graph():
-    t2t_graph = init_tweet_graph(tweets)
-    u2u_graph = init_user_graph(tweets, users)
-    mix_graph = union(t2t_graph, u2u_graph)
 
-    # for v in mix_graph.nodes.data(): print(v)
+def make_graphs():
+    t2t_graph = DiGraph()
+    add_vertices(t2t_graph, tweets, "tweet")
 
-    return mix_graph
+    u2u_graph = DiGraph()
+    add_vertices(u2u_graph, users, "user")
+
+    d2d_graph = DiGraph()
+    add_vertices(d2d_graph, docs, "doc")
+    return t2t_graph, u2u_graph, d2d_graph
+
+
+def homo(t2t_graph, u2u_graph, d2d_graph):
+    add_item_item_edges(t2t_graph, tweets, 0.0)
+    compute_pagerank(t2t_graph)
+
+    add_user_user_edges(u2u_graph, tweets)
+    compute_pagerank(u2u_graph)
+
+    add_item_item_edges(d2d_graph, docs, 0.0)
+    compute_pagerank(d2d_graph)
+
+
+def hetero(graph):
+    add_tweet_user_edges(graph, tweets, users)
+    add_doc_tweet_edges(graph, tweets, docs)
 
 
 def main():
-    graph = init_graph()
+    t2t_graph, u2u_graph, d2d_graph = make_graphs()
+    homo(t2t_graph, u2u_graph, d2d_graph)
+    graph = union(union(t2t_graph, u2u_graph), d2d_graph)
+    hetero(graph)
 
-    plot.subplot(222)
-    draw(graph)
-    plot.show()
+    # do stuff
+    print(graph)
 
 
 if __name__ == '__main__':
