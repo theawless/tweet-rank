@@ -1,6 +1,7 @@
+from collections import deque
 from time import mktime, strptime
 
-from utils import tokenize_text
+from utils import tokenize_text, compute_similarity_matrix
 
 # not sure if we should add plurals
 personal_pronouns = ["i", "me", "mine", "my"]
@@ -23,14 +24,59 @@ def filter_tweets(tweets):
     return filtered_tweets
 
 
-def distribute_tweets(tweets, interval=1):
-    interval *= 60 * 60 * 1000
-    start_time = int(tweets[0]["timestamp_ms"])
-    end_time = int(tweets[-1]["timestamp_ms"])
-    bucket_size = int((end_time - start_time) / interval) + 1
-    buckets = [[]] * bucket_size
+tweet_similarity_matrix = None
+
+
+def get_tweet_similarity_matrix(tweets):
+    global tweet_similarity_matrix
+    if tweet_similarity_matrix is None:
+        tweet_similarity_matrix = compute_similarity_matrix([tweet['text'] for tweet in tweets])
+    return tweet_similarity_matrix
+
+
+millisecond_in_hour = 60 * 60 * 1000
+
+
+def tweets_window_by_nearby(tweets, interval=1):
+    interval *= millisecond_in_hour
+    nearby_tweets = deque()
+    right_tweet_iter = iter(tweets)
     for tweet in tweets:
         tweet_time = int(tweet["timestamp_ms"])
-        index = int((tweet_time - start_time) / interval)
-        buckets[index].append(tweet)
-    return buckets
+
+        # remove from left
+        while nearby_tweets:
+            left_tweet = nearby_tweets[0]
+            left_tweet_time = int(left_tweet["timestamp_ms"])
+            if (tweet_time - left_tweet_time) / interval < 1:
+                break
+            nearby_tweets.popleft()
+
+        # add to right
+        right_tweet = next(right_tweet_iter, None)
+        while right_tweet:
+            right_tweet_time = int(right_tweet["timestamp_ms"])
+            if (right_tweet_time - tweet_time) / interval > 1:
+                break
+            nearby_tweets.append(right_tweet)
+            right_tweet = next(right_tweet_iter, None)
+        yield tweet, nearby_tweets
+        nearby_tweets = deque(nearby_tweets)
+
+
+def tweets_chunk_by_time(tweets, interval=1):
+    interval *= millisecond_in_hour
+    start_time = int(tweets[0]["timestamp_ms"])
+    hour = 0
+    bucket = []
+    for tweet in tweets:
+        tweet_time = int(tweet["timestamp_ms"])
+        new_hour = int((tweet_time - start_time) / interval)
+
+        # next hour started
+        if hour != new_hour:
+            yield hour, bucket
+            hour = new_hour
+            bucket = []
+        bucket.append(tweet)
+    yield hour, bucket
