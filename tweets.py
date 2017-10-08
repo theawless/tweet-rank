@@ -1,3 +1,5 @@
+from time import mktime, strptime
+
 from utils import tokenize_text
 
 # not sure if we should add plurals
@@ -5,6 +7,11 @@ personal_pronouns = ["i", "me", "mine", "my"]
 
 # taken from https://www.mltcreative.com/blog/social-media-minute-big-a-list-of-twitter-slang-and-definitions/
 twitter_slangs = open("data/twitter-slangs.txt").readlines()
+
+
+def tweet_time_to_timestamp(tweet_time):
+    struct_time = strptime(tweet_time, '%a %b %d %H:%M:%S +0000 %Y')
+    return mktime(struct_time) * 1000
 
 
 def filter_tweets(tweets):
