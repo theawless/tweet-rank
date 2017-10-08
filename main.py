@@ -1,8 +1,9 @@
 from networkx import union, DiGraph
 
-from network import add_tweet_user_edges, add_doc_tweet_edges
-from network import add_vertices, add_user_user_edges, add_item_item_edges
 from mongo import get_tweets, get_users, get_docs
+from network import add_tweet_user_edges, add_doc_tweet_edges
+from network import add_user_user_edges, add_doc_doc_edges, add_tweet_tweet_edges
+from network import add_vertices
 from utils import compute_pagerank
 
 tweets = get_tweets()
@@ -23,18 +24,18 @@ def make_graphs():
 
 
 def homo(t2t_graph, u2u_graph, d2d_graph):
-    add_item_item_edges(t2t_graph, tweets, 0.0)
+    add_tweet_tweet_edges(t2t_graph, tweets, 0.0)
     compute_pagerank(t2t_graph)
 
     add_user_user_edges(u2u_graph, tweets)
     compute_pagerank(u2u_graph)
 
-    add_item_item_edges(d2d_graph, docs, 0.0)
+    add_doc_doc_edges(d2d_graph, docs, 0.0)
     compute_pagerank(d2d_graph)
 
 
 def hetero(graph):
-    add_tweet_user_edges(graph, tweets, users)
+    add_tweet_user_edges(graph, tweets, 0.0)
     add_doc_tweet_edges(graph, tweets, docs)
 
 
