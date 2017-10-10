@@ -3,6 +3,8 @@ from pymongo import MongoClient, ASCENDING
 client = MongoClient('localhost', 27017)
 vegas_db = client.vegas
 
+full_tweets_collection = vegas_db.full_tweets
+
 tweets_collection = vegas_db.tweets
 
 users_collection = vegas_db.users
@@ -14,11 +16,12 @@ annotations_collection = vegas_db.annotations
 urls_collection = vegas_db.urls
 
 
-def get_tweets(sort=True, limit=0):
+def get_tweets(full=False, sort=True, limit=0):
+    collection = full_tweets_collection if full else tweets_collection
     if sort:
-        tweets_cursor = tweets_collection.find(limit=limit, sort=[("timestamp_ms", ASCENDING)])
+        tweets_cursor = collection.find(limit=limit, sort=[("timestamp_ms", ASCENDING)])
     else:
-        tweets_cursor = tweets_collection.find(limit=limit)
+        tweets_cursor = collection.find(limit=limit)
     return list(tweets_cursor)
 
 

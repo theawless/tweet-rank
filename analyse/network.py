@@ -60,6 +60,7 @@ def add_user_user_edges(graph):
 
 
 def add_tweet_user_edges(graph, threshold):
+    tweets_similarity_matrix_indexable = tweets_similarity_matrix.todok()
     for tweet_j_index, nearby_tweet_indexes in tweets_window_by_nearby(tweets):
 
         # build user tweet list
@@ -72,7 +73,7 @@ def add_tweet_user_edges(graph, threshold):
 
         # check for max similarity
         for user_i_id_str, tweet_indexes in user_tweet_index_dict.items():
-            similarity = max(tweets_similarity_matrix.todok()[tweet_j_index, tweet_i_index]
+            similarity = max(tweets_similarity_matrix_indexable[tweet_j_index, tweet_i_index]
                              for tweet_i_index in tweet_indexes)
             if similarity >= threshold:
                 tweet_j_id_str = tweets[tweet_j_index]["id_str"]

@@ -2,6 +2,8 @@ from collections import deque
 
 import scipy.sparse
 from networkx import pagerank
+from nltk import FreqDist
+from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from common.utils import tokenize_text
@@ -52,5 +54,10 @@ def tweets_window_by_nearby(tweets, interval=1):
         nearby_tweet_indexes = deque(nearby_tweet_indexes)
 
 
-def find_top_terms(tweets):
-    pass
+def remove_stop_words(terms):
+    return [term for term in terms if term not in stopwords.words('english')]
+
+
+def find_top_terms(terms, number):
+    distribution = FreqDist(terms)
+    return distribution.most_common(number)

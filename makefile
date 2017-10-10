@@ -12,7 +12,7 @@ install_analyse: install_common
 	python3 -c "import nltk; nltk.download('punkt')"
 
 load_sample:
-	mongoimport data/sample-tweets.json  --collection tweets --db vegas
+	mongoimport data/sample-tweets.json  --collection full_tweets --db vegas
 
 clean:
 	python3 -m fetch.clean
@@ -23,6 +23,9 @@ download:
 
 graph:
 	python3 -m analyse.analyse
+
+tweet_top_terms:
+	python3 -m analyse.stuff tweet_top_terms
 
 annotate:
 	python3 -m fetch.annotate 57 500 600
