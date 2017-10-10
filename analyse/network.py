@@ -5,17 +5,17 @@ from analyse.utils import tweets_window_by_nearby
 
 def add_tweet_vertices(graph):
     for tweet in tweets:
-        graph.add_node(tweet["id_str"], content=tweet, score=0)
+        graph.add_node(tweet["id_str"], content=tweet, tweet=True, score=0)
 
 
 def add_user_vertices(graph):
     for user in users:
-        graph.add_node(user["id_str"], content=user, score=0)
+        graph.add_node(user["id_str"], content=user, user=True, score=0)
 
 
 def add_doc_vertices(graph):
     for doc in docs:
-        graph.add_node(doc["id_str"], content=doc, score=0)
+        graph.add_node(doc["id_str"], content=doc, doc=True, score=0)
 
 
 def add_tweet_tweet_edges(graph, threshold):

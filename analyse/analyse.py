@@ -25,7 +25,7 @@ def homo(t2t_graph, u2u_graph, d2d_graph):
     add_user_user_edges(u2u_graph)
     compute_pagerank(u2u_graph)
 
-    #    add_doc_doc_edges(d2d_graph, 0.0)
+    # add_doc_doc_edges(d2d_graph, 0.0)
     compute_pagerank(d2d_graph)
 
 
@@ -33,6 +33,8 @@ def hetero(graph):
     add_tweet_user_edges(graph, 0.0)
     add_doc_tweet_edges(graph)
 
+    L = {'ut': 0.1, 'tu': 0.1, 'dt': 0.1, 'td': 0.1}
+    compute_trihits(graph, L=L)
 
 def main():
     t2t_graph, u2u_graph, d2d_graph = make_graphs()
