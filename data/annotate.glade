@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+    <requires lib="gtk+" version="3.10"/>
+    <object class="GtkApplicationWindow" id="application_window">
+        <property name="visible">True</property>
+        <child>
+            <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="orientation">vertical</property>
+                <child>
+                    <object class="GtkLabel" id="tweet_index_label">
+                        <property name="visible">True</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel" id="tweet_text_label">
+                        <property name="margin">4</property>
+                        <property name="visible">True</property>
+                        <property name="wrap">True</property>
+                    </object>
+                    <packing>
+                        <property name="expand">True</property>
+                    </packing>
+                </child>
+                <child>
+                    <object class="GtkButtonBox" id="button_box">
+                        <property name="visible">True</property>
+                        <property name="layout_style">center</property>
+                    </object>
+                </child>
+            </object>
+        </child>
+        <child type="titlebar">
+            <object class="GtkHeaderBar" id="header_bar">
+                <property name="visible">True</property>
+                <property name="show_close_button">True</property>
+                <child>
+                    <object class="GtkButton" id="previous_button">
+                        <property name="visible">True</property>
+                        <signal name="pressed" handler="previous_button_pressed"/>
+                        <child>
+                            <object class="GtkImage">
+                                <property name="visible">True</property>
+                                <property name="icon_name">pan-start-symbolic</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton" id="next_button">
+                        <property name="visible">True</property>
+                        <signal name="pressed" handler="next_button_pressed"/>
+                        <child>
+                            <object class="GtkImage">
+                                <property name="visible">True</property>
+                                <property name="icon_name">pan-end-symbolic</property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton" id="poop">
+                        <property name="sensitive">False</property>
+                        <property name="visible">True</property>
+                        <child>
+                            <object class="GtkImage">
+                                <property name="visible">True</property>
+                                <property name="icon_name">dialog-question-symbolic</property>
+                                <property name="tooltip_text">
+You can use keyboard shortcuts too!
+N -> next tweet
+P -> previous tweet
+1 -> Uninformative
+...
+5 -> Informative
+                                </property>
+                            </object>
+                        </child>
+                        <style>
+                            <class name="flat"/>
+                        </style>
+                    </object>
+                    <packing>
+                        <property name="pack_type">end</property>
+                    </packing>
+                </child>
+                <child type="title">
+                    <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="label">Annotate Tweets</property>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </object>
+</interface>

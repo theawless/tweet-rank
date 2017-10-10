@@ -1,32 +1,7 @@
-import pymongo
-from pymongo import MongoClient
-
-from docs import filter_docs, hydrate_docs
-from tweets import filter_tweets, tweet_time_to_timestamp
-
-client = MongoClient('localhost', 27017)
-vegas_db = client.vegas
-tweets_collection = vegas_db.tweets
-users_collection = vegas_db.users
-docs_collection = vegas_db.docs
-
-
-def get_tweets(sort=True):
-    if sort:
-        tweets_cursor = tweets_collection.find().sort("timestamp_ms", pymongo.ASCENDING)
-    else:
-        tweets_cursor = tweets_collection.find()
-    return list(tweets_cursor)
-
-
-def get_users():
-    users_cursor = users_collection.find()
-    return list(users_cursor)
-
-
-def get_docs():
-    docs_cursor = docs_collection.find()
-    return list(docs_cursor)
+from common.mongo import get_tweets
+from common.mongo import tweets_collection, users_collection, urls_collection
+from common.utils import tweet_time_to_timestamp
+from fetch.utils import filter_tweets, filter_urls
 
 
 def _save_tweets_from_tweets(tweets):
@@ -75,34 +50,37 @@ def _save_users_from_tweets(tweets):
     users_collection.insert_many(users_dict.values())
 
 
-def _save_docs_from_tweets(tweets):
-    docs_collection.drop()
-    docs_dict = {}
+def _save_urls_from_tweets(tweets):
+    urls_collection.drop()
+    urls_dict = {}
     for tweet in tweets:
-        for doc in tweet["entities"]["urls"]:
-            id_str = doc["url"]
-            if id_str not in docs_dict:
-                doc["id_str"] = id_str
-                doc["tweet_id"] = tweet["id"]
-                doc["tweet_text"] = tweet["text"]
-                docs_dict[id_str] = doc
+        for url in tweet["entities"]["urls"]:
+            id_str = url["url"]
+            if id_str not in urls_dict:
+                url["id_str"] = id_str
+                url["tweet_id_str"] = tweet["id"]
+                url["tweet_text"] = tweet["text"]
+                urls_dict[id_str] = url
 
         # retweet
         if "retweeted_status" in tweet:
             retweet = tweet["retweeted_status"]
-            for doc in retweet["entities"]["urls"]:
-                id_str = doc["url"]
-                if id_str not in docs_dict:
-                    doc["id_str"] = id_str
-                    doc["tweet_id"] = retweet["id"]
-                    doc["tweet_text"] = retweet["text"]
-                    docs_dict[id_str] = doc
-    filtered_docs = filter_docs(docs_dict.values())
-    hydrate_docs(filtered_docs)
-    docs_collection.insert_many(filtered_docs)
+            for url in retweet["entities"]["urls"]:
+                id_str = url["url"]
+                if id_str not in urls_dict:
+                    url["id_str"] = id_str
+                    url["tweet_id_str"] = retweet["id"]
+                    url["tweet_text"] = retweet["text"]
+                    urls_dict[id_str] = url
+    filtered_urls = filter_urls(urls_dict.values())
+    urls_collection.insert_many(filtered_urls)
+
+
+def clean():
+    _save_tweets_from_tweets(get_tweets(False))
+    _save_users_from_tweets(get_tweets(False))
+    _save_urls_from_tweets(get_tweets(False))
 
 
 if __name__ == '__main__':
-    _save_tweets_from_tweets(get_tweets(False))
-    _save_users_from_tweets(get_tweets(False))
-    _save_docs_from_tweets(get_tweets(False))
+    clean()

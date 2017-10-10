@@ -1,5 +1,4 @@
-@reply
-b/abt
+abt
 adventuritter
 afaik
 attwaction
@@ -20,6 +19,7 @@ clk
 crank tweet
 cre8
 da
+twitamin
 daily twitamin
 deets
 deja-tweet
@@ -31,13 +31,15 @@ drunktwittering
 dweet
 eavestweeting
 egotwistical
-em/eml
+em
+eml
 ema
 emergatweet
 f2f
 fav
 fail whale
-follower/following
+follower
+following
 followfriday
 hash tag
 icymi
