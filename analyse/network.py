@@ -59,9 +59,14 @@ def add_user_user_edges(graph):
     return graph
 
 
-def add_tweet_user_edges(graph, threshold):
+def add_user_tweet_edges(graph, threshold):
     tweets_similarity_matrix_indexable = tweets_similarity_matrix.todok()
     for tweet_j_index, nearby_tweet_indexes in tweets_window_by_nearby(tweets):
+        # implicit edge
+        tweet_j = tweets[tweet_j_index]
+        if not graph.has_edge(tweet_j["user"]["id_str"], tweet_j["id_str"]):
+            graph.add_edge(tweet_j["user"]["id_str"], tweet_j["id_str"], weight=0)
+        graph[tweet_j["user"]["id_str"]][tweet_j["id_str"]]["weight"] += 1
 
         # build user tweet list
         user_tweet_index_dict = {}
@@ -76,8 +81,10 @@ def add_tweet_user_edges(graph, threshold):
             similarity = max(tweets_similarity_matrix_indexable[tweet_j_index, tweet_i_index]
                              for tweet_i_index in tweet_indexes)
             if similarity >= threshold:
-                tweet_j_id_str = tweets[tweet_j_index]["id_str"]
-                graph.add_edge(user_i_id_str, tweet_j_id_str, weight=similarity)
+                tweet_j_id_str = tweet_j["id_str"]
+                if not graph.has_edge(user_i_id_str, tweet_j_id_str):
+                    graph.add_edge(user_i_id_str, tweet_j_id_str, weight=0)
+                graph[user_i_id_str][tweet_j_id_str]["weight"] += 1
 
 
 def add_doc_tweet_edges(graph):

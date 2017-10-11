@@ -1,9 +1,8 @@
 from collections import deque
 
+import networkx as nx
 import numpy as np
 import scipy.sparse
-
-import networkx as nx
 from nltk import FreqDist
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -28,42 +27,43 @@ def compute_trihits(graph, L, max_iterations=50):
 
     # Obtain initial scores of tweets, docs and users
     # Note, they are all vectors
-    S0_t = np.asarray([graph[tweet_id]['score'] for tweet_id in tweet_ids]).reshape(-1,1)
-    S0_u = np.asarray([graph[user_id]['score'] for user_id in user_ids]).reshape(-1,1)
-    S0_d = np.asarray([graph[doc_id]['score'] for doc_id in doc_ids]).reshape(-1,1)
+    S0_t = np.asarray([graph[tweet_id]['score'] for tweet_id in tweet_ids]).reshape(-1, 1)
+    S0_u = np.asarray([graph[user_id]['score'] for user_id in user_ids]).reshape(-1, 1)
+    S0_d = np.asarray([graph[doc_id]['score'] for doc_id in doc_ids]).reshape(-1, 1)
 
+    S_t = np.asarray([graph[tweet_id]['score'] for tweet_id in tweet_ids]).reshape(-1, 1)
+    S_u = np.asarray([graph[user_id]['score'] for user_id in user_ids]).reshape(-1, 1)
+    S_d = np.asarray([graph[doc_id]['score'] for doc_id in doc_ids]).reshape(-1, 1)
 
     # W_dt has rows of tweets and docs as columns
-    W_dt = np.zeros(shape=(len(tweet_ids),len(doc_ids)))
-    docs = {doc_ids[i]:i for i in range(len(doc_ids))}
+    W_dt = np.zeros(shape=(len(tweet_ids), len(doc_ids)))
+    docs = {doc_ids[i]: i for i in range(len(doc_ids))}
     for t in range(len(tweet_ids)):
         for n in graph.neighbors(tweet_ids[t]):
-            if graph[n]['doc'] == True:
+            if graph[n]['doc']:
                 W_dt[t][docs[n]] = graph[t][n]['weight']
 
-
     # W_ut has rows of tweets and users as columns
-    W_ut = np.zeros(shape=(len(tweet_ids),len(user_ids)))
-    users = {user_ids[i]:i for i in range(len(user_ids))}
+    W_ut = np.zeros(shape=(len(tweet_ids), len(user_ids)))
+    users = {user_ids[i]: i for i in range(len(user_ids))}
     for t in range(len(tweet_ids)):
         for n in graph.neighbors(tweet_ids[t]):
-            if graph[n]['user'] == True:
+            if graph[n]['user']:
                 W_dt[t][users[n]] = graph[t][n]['weight']
-
 
     while k < max_iterations:
         # Compute new score for tweets
         Sd_t = normalize(W_dt * S_d, norm='l1', axis=0)
         Su_t = normalize(W_ut * S_u, norm='l1', axis=0)
-        nS_t  = (1 - L['dt'] - L['ut']) * S0_t + L['dt'] * Sd_t + L['ut'] * Su_t
+        nS_t = (1 - L['dt'] - L['ut']) * S0_t + L['dt'] * Sd_t + L['ut'] * Su_t
 
         # Compute new score for users
         Su_t = normalize(W_ut.T * S_t, norm='l1', axis=0)
-        nS_u  = (1 - L['tu']) * S0_u + L['tu'] * Su_t
+        nS_u = (1 - L['tu']) * S0_u + L['tu'] * Su_t
 
         # Compute new score for docs
         Sd_t = normalize(W_dt.T * S_t, norm='l1', axis=0)
-        nS_d  = (1 - L['td']) * S0_d + L['td'] * Sd_t
+        nS_d = (1 - L['td']) * S0_d + L['td'] * Sd_t
 
         S_t = normalize(nS_t, norm='l1', axis=0)
         S_d = normalize(nS_d, norm='l1', axis=0)
@@ -73,13 +73,13 @@ def compute_trihits(graph, L, max_iterations=50):
         k += 1
 
     # Update score values for nodes in the graph
-    for t in len(tweet_ids):
+    for t in range(len(tweet_ids)):
         graph[tweet_ids[t]]['score'] = S_t[t]
 
-    for u in len(user):
+    for u in range(len(user_ids)):
         graph[tweet_ids[u]]['score'] = S_t[u]
-    
-    for d in len(doc_ids):
+
+    for d in range(len(doc_ids)):
         graph[tweet_ids[d]]['score'] = S_t[d]
 
 

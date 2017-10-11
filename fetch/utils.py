@@ -24,11 +24,6 @@ def filter_urls(urls):
     return filtered_urls
 
 
-def hydrate_docs(docs):
-    for doc in docs:
-        doc["text"] = "get content using Bing Search / URL"
-
-
 save_tweet_keys = ["text", "id_str", "in_reply_to_user_id_str", "created_at", "entities", "retweeted_status", "user",
                    "timestamp_ms"]
 

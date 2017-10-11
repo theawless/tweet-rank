@@ -44,6 +44,6 @@ def tweets_chunk_by_time(tweets, interval=1, sampled=1):
 
     for bucket_index in range(len(buckets)):
         shuffle(buckets[bucket_index])
-        right_tweet_index = len(buckets[bucket_index]) * sampled
+        right_tweet_index = int(len(buckets[bucket_index]) * sampled)
         buckets[bucket_index] = buckets[bucket_index][:right_tweet_index]
     return buckets

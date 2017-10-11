@@ -1,9 +1,9 @@
 from networkx import union, DiGraph
 
-from analyse.network import add_tweet_user_edges, add_doc_tweet_edges
 from analyse.network import add_tweet_vertices, add_user_vertices, add_doc_vertices
+from analyse.network import add_user_tweet_edges, add_doc_tweet_edges
 from analyse.network import add_user_user_edges, add_tweet_tweet_edges
-from analyse.utils import compute_pagerank
+from analyse.utils import compute_pagerank, compute_trihits
 
 
 def make_graphs():
@@ -30,11 +30,12 @@ def homo(t2t_graph, u2u_graph, d2d_graph):
 
 
 def hetero(graph):
-    add_tweet_user_edges(graph, 0.0)
+    add_user_tweet_edges(graph, 0.0)
     add_doc_tweet_edges(graph)
 
     L = {'ut': 0.1, 'tu': 0.1, 'dt': 0.1, 'td': 0.1}
     compute_trihits(graph, L=L)
+
 
 def main():
     t2t_graph, u2u_graph, d2d_graph = make_graphs()

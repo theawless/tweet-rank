@@ -16,12 +16,15 @@ annotations_collection = vegas_db.annotations
 urls_collection = vegas_db.urls
 
 
-def get_tweets(full=False, sort=True, limit=0):
-    collection = full_tweets_collection if full else tweets_collection
+def get_full_tweets(limit=0):
+    return full_tweets_collection.find(limit=limit)
+
+
+def get_tweets(sort=True, limit=0):
     if sort:
-        tweets_cursor = collection.find(limit=limit, sort=[("timestamp_ms", ASCENDING)])
+        tweets_cursor = tweets_collection.find(limit=limit, sort=[("timestamp_ms", ASCENDING)])
     else:
-        tweets_cursor = collection.find(limit=limit)
+        tweets_cursor = tweets_collection.find(limit=limit)
     return list(tweets_cursor)
 
 
