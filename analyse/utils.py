@@ -88,13 +88,13 @@ def graph_results(graph, top=20, redundancy=0.85):
     # do redundancy removal
     top_non_redundant_tweets_scores = []
 
-    last_tweet_index = 0
-    for tweet_index in range(1, len(tweets_scores)):
+    for tweet_index in range(len(tweets_scores)):
         if len(top_non_redundant_tweets_scores) >= top:
             break
-        similarity = tweets_similarity_matrix[tweets_scores[tweet_index]["index"],
-                                              tweets_scores[last_tweet_index]["index"]]
-        if similarity < redundancy:
-            last_tweet_index = tweet_index
+        similarities = []
+        for last_tweet_index in range(tweet_index):
+            similarities.append(tweets_similarity_matrix[tweets_scores[tweet_index]["index"],
+                                                         tweets_scores[last_tweet_index]["index"]])
+        if all(similarity < redundancy for similarity in similarities):
             top_non_redundant_tweets_scores.append(tweets_scores[tweet_index])
     return top_non_redundant_tweets_scores

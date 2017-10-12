@@ -1,3 +1,5 @@
+from sys import stdout
+
 from analyse import tweets, users, docs, docs_similarity_matrix
 from analyse import tweets_similarity_matrix
 from common.tweets import tweets_window_by_nearby
@@ -23,8 +25,12 @@ def add_doc_vertices(graph):
 
 def add_tweet_tweet_edges(graph, threshold):
     print("adding tweet tweet nodes")
-    s = zip(*tweets_similarity_matrix.nonzero())
-    for r, c in zip(*tweets_similarity_matrix.nonzero()):
+    tsm = tweets_similarity_matrix.multiply(tweets_similarity_matrix >= threshold)
+    count = 0
+    for r, c in zip(*tsm.nonzero()):
+        count += 1
+        stdout.write('\rCount: %d' % count)
+        stdout.flush()
         w = tweets_similarity_matrix[r, c]
         if r < c and w > threshold:
             graph.add_edge(tweets[r]["id_str"], tweets[c]["id_str"], weight=w)
@@ -32,8 +38,13 @@ def add_tweet_tweet_edges(graph, threshold):
 
 
 def add_doc_doc_edges(graph, threshold):
-    print("adding doc doc edges")
-    for r, c in zip(*docs_similarity_matrix.nonzero()):
+    print("\nadding doc doc edges")
+    dsm = docs_similarity_matrix.multiply(docs_similarity_matrix >= threshold)
+    count = 0
+    for r, c in zip(*dsm.nonzero()):
+        count += 1
+        stdout.write('\rCount: %d' % count)
+        stdout.flush()
         w = docs_similarity_matrix[r, c]
         if r < c and w > threshold:
             graph.add_edge(docs[r]["id_str"], docs[c]["id_str"], weight=w)
@@ -41,7 +52,7 @@ def add_doc_doc_edges(graph, threshold):
 
 
 def add_user_user_edges(graph):
-    print("adding user user edges")
+    print("\nadding user user edges")
     for tweet in tweets:
         # author
         user_i = tweet["user"]["id_str"]
@@ -70,7 +81,12 @@ def add_user_user_edges(graph):
 
 def add_tweet_user_edges(graph, threshold):
     print("adding tweet user edges")
-    for tweet_j_index, nearby_tweet_indexes in tweets_window_by_nearby(tweets):
+    count = 0
+    for tweet_j_index, nearby_tweet_indexes in tweets_window_by_nearby(tweets, interval=2):
+        count += 1
+        stdout.write('\rCount: %d' % count)
+        stdout.flush()
+
         # implicit edge
         tweet_j = tweets[tweet_j_index]
         if not graph.has_edge(tweet_j["id_str"], tweet_j["user"]["id_str"]):
