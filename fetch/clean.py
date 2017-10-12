@@ -1,7 +1,7 @@
 from common.mongo import get_tweets, get_full_tweets
 from common.mongo import tweets_collection, users_collection, urls_collection
-from common.utils import tweet_time_to_timestamp, tweets_chunk_by_time
-from fetch.utils import filter_tweets, filter_urls, clean_tweet, clean_user
+from common.tweets import tweet_time_to_timestamp, tweets_chunk_by_time
+from fetch.utils import clean_tweet, clean_user, filter_urls, filter_tweets
 
 
 def _save_tweets_from_full_tweets(tweets):

@@ -1,8 +1,19 @@
 from sys import argv
 
+from nltk import FreqDist
+from nltk.corpus import stopwords
+
 from analyse import tweets
-from analyse.utils import find_top_terms, remove_stop_words
 from common.utils import tokenize_text
+
+
+def remove_stop_words(terms):
+    return [term for term in terms if term not in stopwords.words('english')]
+
+
+def find_top_terms(terms, number):
+    distribution = FreqDist(terms)
+    return distribution.most_common(number)
 
 
 def find_top_terms_in_tweets():

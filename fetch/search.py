@@ -22,9 +22,8 @@ def fill_doc(url, doc):
 
 
 def fill_docs():
-    print(urlopen("http://www.google.com").code)
     for query in queries:
-        for url in search(query, stop=3):
+        for url in search(query, num=1, stop=3):
             doc = {"query": query}
             fill_doc(url, doc)
 

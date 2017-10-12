@@ -1,14 +1,19 @@
 import re
 import string
-from random import shuffle
-from time import mktime, strptime
 
+import scipy.sparse
+from networkx import write_gpickle, read_gpickle
 from nltk import word_tokenize
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
-def tweet_time_to_timestamp(tweet_time):
-    struct_time = strptime(tweet_time, '%a %b %d %H:%M:%S +0000 %Y')
-    return mktime(struct_time) * 1000
+def compute_similarity_matrix(items):
+    vectorizer = TfidfVectorizer(tokenizer=tokenize_text, stop_words='english')
+    tfidf = vectorizer.fit_transform(items)
+    sim_matrix = tfidf * tfidf.T
+
+    # coo_matrix for fast iterations
+    return scipy.sparse.csr_matrix(sim_matrix)
 
 
 def tokenize_text(text):
@@ -20,30 +25,17 @@ def tokenize_text(text):
     words = word_tokenize(text)
 
     # remove weird characters
-    words = [re.sub(r'\W+', "", word) for word in words]
+    words = [re.sub("[^A-Za-z0-9]", "", word) for word in words]
 
     # remove known words
-    words = [word for word in words if word not in ["rt", ""]]
+    words = [word for word in words if word not in [""]]
 
     return words
 
 
-millisecond_in_hour = 60 * 60 * 1000
+def save_graph(graph, name):
+    write_gpickle(graph, "data/" + name + ".pickle")
 
 
-def tweets_chunk_by_time(tweets, interval=1, sampled=1):
-    interval *= millisecond_in_hour
-    start_time = float(tweets[0]["timestamp_ms"])
-    end_time = float(tweets[-1]["timestamp_ms"])
-    bucket_size = int((end_time - start_time) / interval) + 1
-    buckets = [[] for _ in range(bucket_size)]
-    for tweet in tweets:
-        tweet_time = float(tweet["timestamp_ms"])
-        index = int((tweet_time - start_time) / interval)
-        buckets[index].append(tweet)
-
-    for bucket_index in range(len(buckets)):
-        shuffle(buckets[bucket_index])
-        right_tweet_index = int(len(buckets[bucket_index]) * sampled)
-        buckets[bucket_index] = buckets[bucket_index][:right_tweet_index]
-    return buckets
+def read_graph(name):
+    return read_gpickle("data/" + name + ".pickle")

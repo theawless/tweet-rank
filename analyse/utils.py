@@ -1,131 +1,99 @@
-from collections import deque
-
-import networkx as nx
-import numpy as np
-import scipy.sparse
-from nltk import FreqDist
-from nltk.corpus import stopwords
-from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy
+from networkx import pagerank_numpy
+from numpy import asarray, zeros, absolute, asscalar
 from sklearn.preprocessing import normalize
 
-from common.utils import tokenize_text
+from analyse import docs, tweets, users, tweets_similarity_matrix
 
 
 def compute_pagerank(graph):
-    ranks = nx.pagerank(graph, weight="weight")
+    ranks = pagerank_numpy(graph, weight="weight")
     for node_id in ranks.keys():
-        graph.nodes[node_id]["score"] = ranks[node_id]
+        graph.node[node_id]["score"] = ranks[node_id]
 
 
 def compute_trihits(graph, L, max_iterations=50):
     # Initialization
     k = 0
 
-    tweet_ids = nx.get_node_attributes(graph, 'tweet').keys()
-    doc_ids = nx.get_node_attributes(graph, 'doc').keys()
-    user_ids = nx.get_node_attributes(graph, 'user').keys()
+    # Obtain initial scores vectors of tweets, docs and users
+    tweets_scores = [graph.node[tweet["id_str"]]['score'] for tweet in tweets]
+    users_scores = [graph.node[user["id_str"]]['score'] for user in users]
+    docs_scores = [graph.node[doc["id_str"]]['score'] for doc in docs]
 
-    # Obtain initial scores of tweets, docs and users
-    # Note, they are all vectors
-    S0_t = np.asarray([graph[tweet_id]['score'] for tweet_id in tweet_ids]).reshape(-1, 1)
-    S0_u = np.asarray([graph[user_id]['score'] for user_id in user_ids]).reshape(-1, 1)
-    S0_d = np.asarray([graph[doc_id]['score'] for doc_id in doc_ids]).reshape(-1, 1)
+    S0_t = asarray(tweets_scores).reshape(-1, 1)
+    S0_u = asarray(users_scores).reshape(-1, 1)
+    S0_d = asarray(docs_scores).reshape(-1, 1)
 
-    S_t = np.asarray([graph[tweet_id]['score'] for tweet_id in tweet_ids]).reshape(-1, 1)
-    S_u = np.asarray([graph[user_id]['score'] for user_id in user_ids]).reshape(-1, 1)
-    S_d = np.asarray([graph[doc_id]['score'] for doc_id in doc_ids]).reshape(-1, 1)
+    S_t = asarray(tweets_scores).reshape(-1, 1)
+    S_u = asarray(users_scores).reshape(-1, 1)
+    S_d = asarray(docs_scores).reshape(-1, 1)
 
     # W_dt has rows of tweets and docs as columns
-    W_dt = np.zeros(shape=(len(tweet_ids), len(doc_ids)))
-    docs = {doc_ids[i]: i for i in range(len(doc_ids))}
-    for t in range(len(tweet_ids)):
-        for n in graph.neighbors(tweet_ids[t]):
-            if graph[n]['doc']:
-                W_dt[t][docs[n]] = graph[t][n]['weight']
-
+    W_dt = zeros(shape=(len(tweets), len(docs)))
     # W_ut has rows of tweets and users as columns
-    W_ut = np.zeros(shape=(len(tweet_ids), len(user_ids)))
-    users = {user_ids[i]: i for i in range(len(user_ids))}
-    for t in range(len(tweet_ids)):
-        for n in graph.neighbors(tweet_ids[t]):
-            if graph[n]['user']:
-                W_dt[t][users[n]] = graph[t][n]['weight']
+    W_ut = zeros(shape=(len(tweets), len(users)))
+
+    docs_indexes = {docs[i]["id_str"]: i for i in range(len(docs))}
+    users_indexes = {users[i]["id_str"]: i for i in range(len(users))}
+
+    for t in range(len(tweets)):
+        p = list(graph.neighbors(tweets[t]["id_str"]))
+        for n in graph.neighbors(tweets[t]["id_str"]):
+            if "doc" in graph.node[n]:
+                W_dt[t][docs_indexes[n]] = graph[tweets[t]["id_str"]][n]['weight']
+            if "user" in graph.node[n]:
+                W_ut[t][users_indexes[n]] = graph[tweets[t]["id_str"]][n]['weight']
 
     while k < max_iterations:
         # Compute new score for tweets
-        Sd_t = normalize(W_dt * S_d, norm='l1', axis=0)
-        Su_t = normalize(W_ut * S_u, norm='l1', axis=0)
+        Sd_t = normalize(W_dt.dot(S_d), norm='l1', axis=0)
+        Su_t = normalize(W_ut.dot(S_u), norm='l1', axis=0)
         nS_t = (1 - L['dt'] - L['ut']) * S0_t + L['dt'] * Sd_t + L['ut'] * Su_t
 
+        print(k, format(numpy.sum(absolute(nS_t - S_t)), '.32f'))
+
         # Compute new score for users
-        Su_t = normalize(W_ut.T * S_t, norm='l1', axis=0)
+        Su_t = normalize(W_ut.T.dot(S_t), norm='l1', axis=0)
         nS_u = (1 - L['tu']) * S0_u + L['tu'] * Su_t
 
         # Compute new score for docs
-        Sd_t = normalize(W_dt.T * S_t, norm='l1', axis=0)
+        Sd_t = normalize(W_dt.T.dot(S_t), norm='l1', axis=0)
         nS_d = (1 - L['td']) * S0_d + L['td'] * Sd_t
 
         S_t = normalize(nS_t, norm='l1', axis=0)
         S_d = normalize(nS_d, norm='l1', axis=0)
         S_u = normalize(nS_u, norm='l1', axis=0)
 
-        # diff =  np.sum(np.absolute(nS_t - S_t))
         k += 1
 
     # Update score values for nodes in the graph
-    for t in range(len(tweet_ids)):
-        graph[tweet_ids[t]]['score'] = S_t[t]
+    for t in range(len(tweets)):
+        graph.node[tweets[t]["id_str"]]['score'] = asscalar(S_t[t])
 
-    for u in range(len(user_ids)):
-        graph[tweet_ids[u]]['score'] = S_t[u]
+    for u in range(len(users)):
+        graph.node[users[u]["id_str"]]['score'] = asscalar(S_u[u][0])
 
-    for d in range(len(doc_ids)):
-        graph[tweet_ids[d]]['score'] = S_t[d]
-
-
-def compute_similarity_matrix(items):
-    vectorizer = TfidfVectorizer(tokenizer=tokenize_text, stop_words='english')
-    tfidf = vectorizer.fit_transform(items)
-    sim_matrix = tfidf * tfidf.T
-
-    # coo_matrix for fast iterations
-    return scipy.sparse.coo_matrix(sim_matrix)
+    for d in range(len(docs)):
+        graph.node[docs[d]["id_str"]]['score'] = asscalar(S_d[d][0])
 
 
-millisecond_in_hour = 60 * 60 * 1000
+def graph_results(graph, top=20, redundancy=0.85):
+    tweets_scores = []
+    for tweet in tweets:
+        tweets_scores.append(graph.node[tweet["id_str"]])
+    tweets_scores = sorted(tweets_scores, reverse=True, key=lambda key: key["score"])
 
+    # do redundancy removal
+    top_non_redundant_tweets_scores = []
 
-def tweets_window_by_nearby(tweets, interval=1):
-    interval *= millisecond_in_hour
-    nearby_tweet_indexes = deque()
-    right_tweet_index_iter = iter(range(len(tweets)))
-    for tweet_index in range(len(tweets)):
-        tweet_time = int(tweets[tweet_index]["timestamp_ms"])
-
-        # remove from left
-        while nearby_tweet_indexes:
-            left_tweet_index = nearby_tweet_indexes[0]
-            left_tweet_time = int(tweets[left_tweet_index]["timestamp_ms"])
-            if (tweet_time - left_tweet_time) / interval < 1:
-                break
-            nearby_tweet_indexes.popleft()
-
-        # add to right
-        right_tweet_index = next(right_tweet_index_iter, None)
-        while right_tweet_index:
-            right_tweet_time = int(tweets[right_tweet_index]["timestamp_ms"])
-            if (right_tweet_time - tweet_time) / interval > 1:
-                break
-            nearby_tweet_indexes.append(right_tweet_index)
-            right_tweet_index = next(right_tweet_index_iter, None)
-        yield tweet_index, nearby_tweet_indexes
-        nearby_tweet_indexes = deque(nearby_tweet_indexes)
-
-
-def remove_stop_words(terms):
-    return [term for term in terms if term not in stopwords.words('english')]
-
-
-def find_top_terms(terms, number):
-    distribution = FreqDist(terms)
-    return distribution.most_common(number)
+    last_tweet_index = 0
+    for tweet_index in range(1, len(tweets_scores)):
+        if len(top_non_redundant_tweets_scores) >= top:
+            break
+        similarity = tweets_similarity_matrix[tweets_scores[tweet_index]["index"],
+                                              tweets_scores[last_tweet_index]["index"]]
+        if similarity < redundancy:
+            last_tweet_index = tweet_index
+            top_non_redundant_tweets_scores.append(tweets_scores[tweet_index])
+    return top_non_redundant_tweets_scores
