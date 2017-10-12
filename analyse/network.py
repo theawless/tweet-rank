@@ -23,22 +23,21 @@ def add_doc_vertices(graph):
 
 def add_tweet_tweet_edges(graph, threshold):
     print("adding tweet tweet nodes")
-    for i in range(len(tweets)):
-        for j in range(len(tweets)):
-            w = tweets_similarity_matrix[i, j]
-            if tweets[i]["id_str"] != tweets[j]["id_str"] and w > threshold:
-                graph.add_edge(tweets[i]["id_str"], tweets[j]["id_str"], weight=w)
-                graph.add_edge(tweets[j]["id_str"], tweets[i]["id_str"], weight=w)
+    s = zip(*tweets_similarity_matrix.nonzero())
+    for r, c in zip(*tweets_similarity_matrix.nonzero()):
+        w = tweets_similarity_matrix[r, c]
+        if r < c and w > threshold:
+            graph.add_edge(tweets[r]["id_str"], tweets[c]["id_str"], weight=w)
+            graph.add_edge(tweets[c]["id_str"], tweets[r]["id_str"], weight=w)
 
 
 def add_doc_doc_edges(graph, threshold):
     print("adding doc doc edges")
-    for i in range(len(docs)):
-        for j in range(len(docs)):
-            w = docs_similarity_matrix[i, j]
-            if docs[i]["id_str"] != docs[j]["id_str"] and w > threshold:
-                graph.add_edge(docs[i]["id_str"], docs[j]["id_str"], weight=w)
-                graph.add_edge(docs[j]["id_str"], docs[i]["id_str"], weight=w)
+    for r, c in zip(*docs_similarity_matrix.nonzero()):
+        w = docs_similarity_matrix[r, c]
+        if r < c and w > threshold:
+            graph.add_edge(docs[r]["id_str"], docs[c]["id_str"], weight=w)
+            graph.add_edge(docs[c]["id_str"], docs[r]["id_str"], weight=w)
 
 
 def add_user_user_edges(graph):
