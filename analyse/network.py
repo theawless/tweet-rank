@@ -1,8 +1,14 @@
 from sys import stdout
 
+import numpy as np
+import scipy.sparse
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
 from analyse import tweets, users, docs, docs_similarity_matrix
 from analyse import tweets_similarity_matrix
 from common.tweets import tweets_window_by_nearby
+from common.utils import tokenize_text
 
 
 def add_tweet_vertices(graph):
@@ -25,7 +31,7 @@ def add_doc_vertices(graph):
 
 def add_tweet_tweet_edges(graph, threshold):
     print("adding tweet tweet nodes")
-    tsm = tweets_similarity_matrix.multiply(tweets_similarity_matrix >= threshold)
+    tsm = tweets_similarity_matrix > threshold
     count = 0
     for r, c in zip(*tsm.nonzero()):
         count += 1
@@ -39,7 +45,7 @@ def add_tweet_tweet_edges(graph, threshold):
 
 def add_doc_doc_edges(graph, threshold):
     print("\nadding doc doc edges")
-    dsm = docs_similarity_matrix.multiply(docs_similarity_matrix >= threshold)
+    dsm = docs_similarity_matrix > threshold
     count = 0
     for r, c in zip(*dsm.nonzero()):
         count += 1
@@ -61,16 +67,19 @@ def add_user_user_edges(graph):
         # retweet
         if "retweeted_status" in tweet:
             user_j = tweet["retweeted_status"]["user"]["id_str"]
-            user_js.append(user_j)
+            if user_i != user_j:
+                user_js.append(user_j)
 
         # reply
         user_j = tweet["in_reply_to_user_id_str"]
         if user_j is not None:
-            user_js.append(user_j)
+            if user_i != user_j:
+                user_js.append(user_j)
 
         # mentions
         for mention in tweet["entities"]["user_mentions"]:
-            user_js.append(mention["id_str"])
+            if user_i != mention["id_str"]:
+                user_js.append(mention["id_str"])
 
         for user_j in user_js:
             if not graph.has_edge(user_i, user_j):
@@ -103,9 +112,11 @@ def add_tweet_user_edges(graph, threshold):
 
         # check for max similarity
         for user_i_id_str, tweet_indexes in user_tweet_index_dict.items():
+            if tweet_j["user"]["id_str"] == user_i_id_str:
+                continue
             similarity = max(tweets_similarity_matrix[tweet_j_index, tweet_i_index]
                              for tweet_i_index in tweet_indexes)
-            if similarity >= threshold:
+            if similarity > threshold:
                 tweet_j_id_str = tweet_j["id_str"]
                 if not graph.has_edge(tweet_j_id_str, user_i_id_str):
                     graph.add_edge(tweet_j_id_str, user_i_id_str, weight=0)
@@ -114,3 +125,34 @@ def add_tweet_user_edges(graph, threshold):
 
 def add_doc_tweet_edges(graph, threshold):
     print("adding doc tweet edges")
+
+    tweet_texts = [tweet['text'] for tweet in tweets]
+
+    vectorizer = CountVectorizer(tokenizer=tokenize_text, stop_words='english')
+    tfidf_transformer = TfidfTransformer()
+
+    tweets_matrix = vectorizer.fit_transform(tweet_texts)
+    tfidf_transformer.fit(tweets_matrix)
+    tfidf_transformer.transform(tweets_matrix)
+
+    results = []
+    for doc in docs:
+        doc_text = doc['text']
+        doc_vector = vectorizer.transform([doc_text])
+
+        tfidf_transformer.fit(doc_vector)
+        tfidf_doc = tfidf_transformer.transform(doc_vector)
+
+        result = np.array([np.asscalar(s) for s in cosine_similarity(tweets_matrix, tfidf_doc)])
+        results.append(result)
+
+    doc_tweet_matrix = scipy.sparse.csr_matrix(results)
+    dsm = doc_tweet_matrix > threshold
+    count = 0
+    for r, c in zip(*dsm.nonzero()):
+        count += 1
+        stdout.write('\rCount: %d' % count)
+        stdout.flush()
+        w = doc_tweet_matrix[r, c]
+        graph.add_edge(docs[r]["id_str"], tweets[c]["id_str"], weight=w)
+        graph.add_edge(tweets[c]["id_str"], docs[r]["id_str"], weight=w)
