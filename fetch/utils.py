@@ -2,6 +2,7 @@ from common.utils import tokenize_text
 
 
 def filter_tweets(tweets):
+    print("filtering tweets")
     filtered_tweets = []
     for tweet in tweets:
         if tweet["text"] == "RT":
@@ -12,6 +13,7 @@ def filter_tweets(tweets):
 
 
 def filter_urls(urls):
+    print("filtering urls")
     filtered_urls = []
     for url in urls:
         if "twitter.com" not in url["expanded_url"]:

@@ -22,14 +22,17 @@ def make_graphs():
 
 def homo(t2t_graph, u2u_graph, d2d_graph):
     add_tweet_tweet_edges(t2t_graph, 0.5)
+    print("computing t2t graph pagerank")
     compute_pagerank(t2t_graph)
     save_graph(t2t_graph, "tweets-text-rank")
 
     add_user_user_edges(u2u_graph)
+    print("computing u2u graph pagerank")
     compute_pagerank(u2u_graph)
     save_graph(u2u_graph, "users-text-rank")
 
     add_doc_doc_edges(d2d_graph, 0.5)
+    print("computing t2t graph pagerank")
     compute_pagerank(d2d_graph)
     save_graph(d2d_graph, "docs-text-rank")
 
@@ -47,16 +50,19 @@ def hetero(graph):
 
 
 def main():
+    print("making individual graphs")
     t2t_graph, u2u_graph, d2d_graph = make_graphs()
     homo(t2t_graph, u2u_graph, d2d_graph)
     print_results(graph_results(t2t_graph))
 
+    print("merging individual graphs")
     graph = union(union(t2t_graph, u2u_graph), d2d_graph)
     hetero(graph)
     print_results(graph_results(graph))
 
 
 def print_results(stuff):
+    print()
     for tweet_node in stuff:
         print(tweets[tweet_node["index"]]["text"], format(tweet_node["score"], '.32f'))
 

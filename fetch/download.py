@@ -9,6 +9,7 @@ twitter = Twarc("consumer key",
 
 
 def download():
+    print("downloading")
     count = 0
     total_count = 0
     tweets = []

@@ -4,21 +4,25 @@ from common.tweets import tweets_window_by_nearby
 
 
 def add_tweet_vertices(graph):
+    print("adding tweet nodes")
     for i in range(len(tweets)):
         graph.add_node(tweets[i]["id_str"], index=i, tweet=True, score=0)
 
 
 def add_user_vertices(graph):
+    print("adding user nodes")
     for i in range(len(users)):
         graph.add_node(users[i]["id_str"], index=i, user=True, score=0)
 
 
 def add_doc_vertices(graph):
+    print("adding doc nodes")
     for i in range(len(docs)):
         graph.add_node(docs[i]["id_str"], index=i, doc=True, score=0)
 
 
 def add_tweet_tweet_edges(graph, threshold):
+    print("adding tweet tweet nodes")
     for i in range(len(tweets)):
         for j in range(len(tweets)):
             w = tweets_similarity_matrix[i, j]
@@ -28,6 +32,7 @@ def add_tweet_tweet_edges(graph, threshold):
 
 
 def add_doc_doc_edges(graph, threshold):
+    print("adding doc doc edges")
     for i in range(len(docs)):
         for j in range(len(docs)):
             w = docs_similarity_matrix[i, j]
@@ -37,6 +42,7 @@ def add_doc_doc_edges(graph, threshold):
 
 
 def add_user_user_edges(graph):
+    print("adding user user edges")
     for tweet in tweets:
         # author
         user_i = tweet["user"]["id_str"]
@@ -64,6 +70,7 @@ def add_user_user_edges(graph):
 
 
 def add_tweet_user_edges(graph, threshold):
+    print("adding tweet user edges")
     for tweet_j_index, nearby_tweet_indexes in tweets_window_by_nearby(tweets):
         # implicit edge
         tweet_j = tweets[tweet_j_index]
@@ -91,4 +98,4 @@ def add_tweet_user_edges(graph, threshold):
 
 
 def add_doc_tweet_edges(graph, threshold):
-    return
+    print("adding doc tweet edges")

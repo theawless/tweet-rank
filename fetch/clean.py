@@ -5,6 +5,7 @@ from fetch.utils import clean_tweet, clean_user, filter_urls, filter_tweets
 
 
 def _save_tweets_from_full_tweets(tweets):
+    print("saving tweets from full tweets")
     tweets_collection.drop()
     tweets_dict = {}
     for tweet in tweets:
@@ -31,6 +32,7 @@ def _save_tweets_from_full_tweets(tweets):
 
 
 def _save_users_from_tweets(tweets):
+    print("saving users from tweets")
     users_collection.drop()
     users_dict = {}
     for tweet in tweets:
@@ -59,6 +61,7 @@ def _save_users_from_tweets(tweets):
 
 
 def _save_urls_from_tweets(tweets):
+    print("saving urls from tweets")
     urls_collection.drop()
     urls_dict = {}
     for tweet in tweets:
@@ -85,6 +88,7 @@ def _save_urls_from_tweets(tweets):
 
 
 def clean():
+    print("cleaning")
     _save_tweets_from_full_tweets(get_full_tweets())
     _save_users_from_tweets(get_tweets(False))
     _save_urls_from_tweets(get_tweets(False))

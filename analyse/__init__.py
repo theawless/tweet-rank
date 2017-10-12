@@ -5,5 +5,7 @@ tweets = get_tweets()
 users = get_users()
 docs = get_docs()
 
+print("compute tweets similarity matrix")
 tweets_similarity_matrix = compute_similarity_matrix(tweet["text"] for tweet in tweets)
+print("compute docs similarity matrix")
 docs_similarity_matrix = compute_similarity_matrix(doc["text"] for doc in docs)

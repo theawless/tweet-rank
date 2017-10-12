@@ -3,7 +3,7 @@ from sys import argv
 from gi.repository import Gtk, Gdk
 
 from common.mongo import get_tweets, annotations_collection
-from common.utils import tweets_chunk_by_time
+from common.tweets import tweets_chunk_by_time
 
 
 class Application(Gtk.Application):
@@ -58,6 +58,7 @@ class Application(Gtk.Application):
         self._update_tweet()
 
     def annotate_button_pressed(self, _, i):
+        print("annotation", i)
         tweet = self.tweets[self.tweet_index]
         annotation = {"tweet_id_str": tweet["id_str"], "annotation": str(i)}
         annotations_collection.update_one({"tweet_id_str": tweet["id_str"]}, {"$set": annotation}, upsert=True)

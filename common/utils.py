@@ -34,8 +34,10 @@ def tokenize_text(text):
 
 
 def save_graph(graph, name):
+    print("saving graph")
     write_gpickle(graph, "data/" + name + ".pickle")
 
 
 def read_graph(name):
+    print("reading graph")
     return read_gpickle("data/" + name + ".pickle")

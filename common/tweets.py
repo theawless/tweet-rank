@@ -40,6 +40,7 @@ def tweets_window_by_nearby(tweets, interval=4):
 
 
 def tweets_chunk_by_time(tweets, interval=1, sampled=1):
+    print("chunking tweets by time")
     interval *= millisecond_in_hour
     start_time = float(tweets[0]["timestamp_ms"])
     end_time = float(tweets[-1]["timestamp_ms"])
@@ -65,6 +66,7 @@ twitter_slangs = open("data/twitter-slangs.txt").readlines()
 
 
 def tweets_remove_spam(tweets):
+    print("removing tweet spam")
     filtered_tweets = []
     for tweet in tweets:
         tokens = tokenize_text(tweet["text"])

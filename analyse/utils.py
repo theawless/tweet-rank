@@ -13,6 +13,7 @@ def compute_pagerank(graph):
 
 
 def compute_trihits(graph, L, max_iterations=50):
+    print("computing trihits")
     # Initialization
     k = 0
 
@@ -38,7 +39,6 @@ def compute_trihits(graph, L, max_iterations=50):
     users_indexes = {users[i]["id_str"]: i for i in range(len(users))}
 
     for t in range(len(tweets)):
-        p = list(graph.neighbors(tweets[t]["id_str"]))
         for n in graph.neighbors(tweets[t]["id_str"]):
             if "doc" in graph.node[n]:
                 W_dt[t][docs_indexes[n]] = graph[tweets[t]["id_str"]][n]['weight']
@@ -79,6 +79,7 @@ def compute_trihits(graph, L, max_iterations=50):
 
 
 def graph_results(graph, top=20, redundancy=0.85):
+    print("generating graph results")
     tweets_scores = []
     for tweet in tweets:
         tweets_scores.append(graph.node[tweet["id_str"]])
