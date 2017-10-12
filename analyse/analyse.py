@@ -1,6 +1,5 @@
 from networkx import union, DiGraph
 
-from analyse import tweets
 from analyse.network import add_tweet_user_edges, add_doc_tweet_edges
 from analyse.network import add_tweet_vertices, add_user_vertices, add_doc_vertices, add_doc_doc_edges
 from analyse.network import add_user_user_edges, add_tweet_tweet_edges
@@ -61,10 +60,10 @@ def main():
     print_results(graph_results(graph))
 
 
-def print_results(stuff):
+def print_results(scores):
     print()
-    for tweet_node in stuff:
-        print(tweets[tweet_node["index"]]["text"], format(tweet_node["score"], '.32f'))
+    for text, score in scores:
+        print(text, format(score, '.32f'))
 
 
 if __name__ == '__main__':

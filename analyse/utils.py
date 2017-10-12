@@ -1,9 +1,12 @@
+from math import log
+
 import numpy
 from networkx import pagerank_numpy
 from numpy import asarray, zeros, absolute, asscalar
 from sklearn.preprocessing import normalize
 
 from analyse import docs, tweets, users, tweets_similarity_matrix
+from common.mongo import annotations_collection
 
 
 def compute_pagerank(graph):
@@ -78,7 +81,7 @@ def compute_trihits(graph, L, max_iterations=50):
         graph.node[docs[d]["id_str"]]['score'] = asscalar(S_d[d][0])
 
 
-def graph_results(graph, top=20, redundancy=0.85):
+def graph_results(graph, top=20, redundancy=0.75):
     print("generating graph results")
     tweets_scores = []
     for tweet in tweets:
@@ -96,5 +99,46 @@ def graph_results(graph, top=20, redundancy=0.85):
             similarities.append(tweets_similarity_matrix[tweets_scores[tweet_index]["index"],
                                                          tweets_scores[last_tweet_index]["index"]])
         if all(similarity < redundancy for similarity in similarities):
-            top_non_redundant_tweets_scores.append(tweets_scores[tweet_index])
+            top_non_redundant_tweets_scores.append([tweets[tweets_scores[tweet_index]["index"]]["text"],
+                                                    tweets_scores[tweet_index]["score"]])
     return top_non_redundant_tweets_scores
+
+
+def dcg_at_k(graph, k):
+    from common.mongo import vegas_db
+    tweets_m_collection = vegas_db.tweets_m
+    tweets_j_collection = vegas_db.tweets_j
+    tweets_m = list(tweets_m_collection.find())
+    tweets_j = list(tweets_j_collection.find())
+    annotations_m = []
+    annotations_j = []
+
+    for tweet in tweets_m:
+        annotation = annotations_collection.find_one({"tweet_id_str": tweet["id_str"]})
+        try:
+            annotation['score'] = graph.node[annotation["tweet_id_str"]]['score']
+        except:
+            continue
+        annotations_m.append(annotation)
+    for tweet in tweets_j:
+        annotation = annotations_collection.find_one({"tweet_id_str": tweet["id_str"]})
+        try:
+            annotation['score'] = graph.node[annotation["tweet_id_str"]]['score']
+        except:
+            continue
+        annotations_j.append(annotation)
+
+    annotations_m = sorted(annotations_m, reverse=True, key=lambda x: x["score"])[:k + 1]
+    dm, i = 0, 1
+    for annotation in annotations_m:
+        annotation_score = int(annotation["annotation"])
+        dm += (pow(2, annotation_score) - 1) / (log(i + 1, 2))
+        i += 1
+
+    annotations_j = sorted(annotations_j, reverse=True, key=lambda x: x["score"])[:k + 1]
+    dj, i = 0, 1
+    for annotation in annotations_j:
+        annotation_score = int(annotation["annotation"])
+        dm += (pow(2, annotation_score) - 1) / (log(i + 1, 2))
+
+    print("DCG: ", dm, dj)
