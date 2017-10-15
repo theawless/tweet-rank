@@ -91,16 +91,14 @@ def add_user_user_edges(graph):
 def add_tweet_user_edges(graph, threshold):
     print("adding tweet user edges")
     count = 0
-    for tweet_j_index, nearby_tweet_indexes in tweets_window_by_nearby(tweets, interval=2):
+    for tweet_j_index, nearby_tweet_indexes in tweets_window_by_nearby(tweets, interval=480):
         count += 1
         stdout.write('\rCount: %d' % count)
         stdout.flush()
 
         # implicit edge
         tweet_j = tweets[tweet_j_index]
-        if not graph.has_edge(tweet_j["id_str"], tweet_j["user"]["id_str"]):
-            graph.add_edge(tweet_j["id_str"], tweet_j["user"]["id_str"], weight=0)
-        graph[tweet_j["id_str"]][tweet_j["user"]["id_str"]]["weight"] += 1
+        graph.add_edge(tweet_j["id_str"], tweet_j["user"]["id_str"], weight=1)
 
         # build user tweet list
         user_tweet_index_dict = {}
@@ -118,9 +116,7 @@ def add_tweet_user_edges(graph, threshold):
                              for tweet_i_index in tweet_indexes)
             if similarity > threshold:
                 tweet_j_id_str = tweet_j["id_str"]
-                if not graph.has_edge(tweet_j_id_str, user_i_id_str):
-                    graph.add_edge(tweet_j_id_str, user_i_id_str, weight=0)
-                graph[tweet_j_id_str][user_i_id_str]["weight"] += 1
+                graph.add_edge(tweet_j_id_str, user_i_id_str, weight=1)
 
 
 def add_doc_tweet_edges(graph, threshold):

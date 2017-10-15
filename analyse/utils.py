@@ -101,7 +101,18 @@ def graph_results(graph, top=20, redundancy=0.75):
         if all(similarity < redundancy for similarity in similarities):
             top_non_redundant_tweets_scores.append([tweets[tweets_scores[tweet_index]["index"]]["text"],
                                                     tweets_scores[tweet_index]["score"]])
+    dcg_at_k(graph, 10)
     return top_non_redundant_tweets_scores
+
+
+def compute_idcg(annotations):
+    idcg = 0.0
+    a_sort = sorted(annotations, key=lambda x: x['annotation'], reverse=True)
+    i = 1
+    for s in a_sort:
+        idcg += (pow(2, int(s['annotation'])) - 1) / (log(i + 1, 2))
+        i += 1
+    return idcg
 
 
 def dcg_at_k(graph, k):
@@ -120,6 +131,7 @@ def dcg_at_k(graph, k):
         except:
             continue
         annotations_m.append(annotation)
+
     for tweet in tweets_j:
         annotation = annotations_collection.find_one({"tweet_id_str": tweet["id_str"]})
         try:
@@ -139,6 +151,7 @@ def dcg_at_k(graph, k):
     dj, i = 0, 1
     for annotation in annotations_j:
         annotation_score = int(annotation["annotation"])
-        dm += (pow(2, annotation_score) - 1) / (log(i + 1, 2))
+        dj += (pow(2, annotation_score) - 1) / (log(i + 1, 2))
+        i += 1
 
-    print("DCG: ", dm, dj)
+    print("DCG: ", dm / compute_idcg(annotations_m), dj / compute_idcg(annotations_j))
