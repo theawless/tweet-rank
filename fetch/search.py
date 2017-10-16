@@ -1,22 +1,21 @@
-from urllib.request import urlopen
+import urllib.request
 
-from bs4 import BeautifulSoup
-from google import search
+import bs4
+import google
 
-from common.mongo import docs_collection
+import common.mongo
 
 queries = open("data/sample-queries.txt").readlines()
 
 
 def fill_doc(url, doc):
     try:
-        print(url)
-        html = urlopen(url)
-        soup = BeautifulSoup(html)
+        html = urllib.request.urlopen(url)
+        soup = bs4.BeautifulSoup(html)
         doc["id_str"] = url
         doc["text"] = soup.title.text
+        common.mongo.docs_collection.update_one({"id_str": doc["id_str"]}, {"$set": doc}, upsert=True)
         print(doc)
-        docs_collection.update_one({"id_str": doc["id_str"]}, {"$set": doc}, upsert=True)
     except Exception:
         pass
 
@@ -24,7 +23,7 @@ def fill_doc(url, doc):
 def fill_docs():
     for query in queries:
         print("searching for", query)
-        for url in search(query, num=1, stop=3):
+        for url in google.search(query, num=1, stop=3):
             doc = {"query": query}
             fill_doc(url, doc)
 

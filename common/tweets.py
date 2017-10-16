@@ -1,20 +1,20 @@
-from collections import deque
-from random import shuffle
-from time import strptime, mktime
+import collections
+import random
+import time
 
-from common.utils import tokenize_text
+import common.utils
 
 millisecond_in_hour = 60 * 60 * 1000
 
 
 def tweet_time_to_timestamp(tweet_time):
-    struct_time = strptime(tweet_time, '%a %b %d %H:%M:%S +0000 %Y')
-    return int(mktime(struct_time) * 1000)
+    struct_time = time.strptime(tweet_time, '%a %b %d %H:%M:%S +0000 %Y')
+    return int(time.mktime(struct_time) * 1000)
 
 
 def tweets_window_by_nearby(tweets, interval=4):
     interval *= millisecond_in_hour
-    nearby_tweet_indexes = deque()
+    nearby_tweet_indexes = collections.deque()
     right_tweet_index_iter = iter(range(len(tweets)))
     for tweet_index in range(len(tweets)):
         tweet_time = int(float(tweets[tweet_index]["timestamp_ms"]))
@@ -36,7 +36,7 @@ def tweets_window_by_nearby(tweets, interval=4):
             nearby_tweet_indexes.append(right_tweet_index)
             right_tweet_index = next(right_tweet_index_iter, None)
         yield tweet_index, nearby_tweet_indexes
-        nearby_tweet_indexes = deque(nearby_tweet_indexes)
+        nearby_tweet_indexes = collections.deque(nearby_tweet_indexes)
 
 
 def tweets_chunk_by_time(tweets, interval=1, sampled=1):
@@ -52,7 +52,7 @@ def tweets_chunk_by_time(tweets, interval=1, sampled=1):
         buckets[index].append(tweet)
 
     for bucket_index in range(len(buckets)):
-        shuffle(buckets[bucket_index])
+        random.shuffle(buckets[bucket_index])
         right_tweet_index = int(len(buckets[bucket_index]) * sampled)
         buckets[bucket_index] = buckets[bucket_index][:right_tweet_index]
     return buckets
@@ -69,7 +69,7 @@ def tweets_remove_spam(tweets):
     print("removing tweet spam")
     filtered_tweets = []
     for tweet in tweets:
-        tokens = tokenize_text(tweet["text"])
+        tokens = common.utils.tokenize_text(tweet["text"])
         if not any(word in tokens for word in personal_pronouns):
             if not any(word in tweet["text"] for word in twitter_slangs):
                 if len(tokens) > 4:

@@ -1,18 +1,17 @@
-from pymongo import MongoClient, ASCENDING
+import pymongo
 
-from common.settings import mongo_settings
+import common.settings
 
-settings = mongo_settings
+client = pymongo.MongoClient(common.settings.mongo_settings.getstring("Host"),
+                             common.settings.mongo_settings.getint("Port"))
+database = client[common.settings.mongo_settings.getstring("Database")]
 
-client = MongoClient(settings.getstring("Host"), settings.getint("Port"))
-database = client[settings.getstring("Database")]
-
-full_tweets_collection = database[settings.getstring("FullTweetsCollection")]
-tweets_collection = database[settings.getstring("TweetsCollection")]
-users_collection = database[settings.getstring("UsersCollection")]
-docs_collection = database[settings.getstring("DocsCollection")]
-annotations_collection = database[settings.getstring("AnnotationsCollection")]
-urls_collection = database[settings.getstring("UrlsCollection")]
+full_tweets_collection = database[common.settings.mongo_settings.getstring("FullTweetsCollection")]
+tweets_collection = database[common.settings.mongo_settings.getstring("TweetsCollection")]
+users_collection = database[common.settings.mongo_settings.getstring("UsersCollection")]
+docs_collection = database[common.settings.mongo_settings.getstring("DocsCollection")]
+annotations_collection = database[common.settings.mongo_settings.getstring("AnnotationsCollection")]
+urls_collection = database[common.settings.mongo_settings.getstring("UrlsCollection")]
 
 
 def get_full_tweets(limit=0):
@@ -23,7 +22,7 @@ def get_full_tweets(limit=0):
 def get_tweets(sort=True, limit=0):
     print("getting tweets")
     if sort:
-        tweets_cursor = tweets_collection.find(limit=limit, sort=[("timestamp_ms", ASCENDING)])
+        tweets_cursor = tweets_collection.find(limit=limit, sort=[("timestamp_ms", pymongo.ASCENDING)])
     else:
         tweets_cursor = tweets_collection.find(limit=limit)
     return list(tweets_cursor)

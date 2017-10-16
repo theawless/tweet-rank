@@ -1,11 +1,11 @@
-from common.mongo import get_tweets, get_users, get_docs
-from common.utils import compute_similarity_matrix
+import common.mongo
+import common.utils
 
-tweets = get_tweets()
-users = get_users()
-docs = get_docs()
+tweets = common.mongo.get_tweets()
+users = common.mongo.get_users()
+docs = common.mongo.get_docs()
 
 print("compute tweets similarity matrix")
-tweets_similarity_matrix = compute_similarity_matrix(tweet["text"] for tweet in tweets)
+tweets_similarity_matrix = common.utils.compute_similarity_matrix(tweet["text"] for tweet in tweets)
 print("compute docs similarity matrix")
-docs_similarity_matrix = compute_similarity_matrix(doc["text"] for doc in docs)
+docs_similarity_matrix = common.utils.compute_similarity_matrix(doc["text"] for doc in docs)

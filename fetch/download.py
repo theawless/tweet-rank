@@ -1,12 +1,12 @@
-from twarc import Twarc
+import twarc
 
-from common.mongo import tweets_collection
-from common.settings import download_settings
+import common.mongo
+import common.settings
 
-twitter = Twarc(download_settings.getstring("TwitterConsumerKey"),
-                download_settings.getstring("TwitterConsumerSecret"),
-                download_settings.getstring("TwitterAccessKey"),
-                download_settings.getstring("TwitterAccessSecret"))
+twitter = twarc.Twarc(common.settings.download_settings.getstring("TwitterConsumerKey"),
+                      common.settings.download_settings.getstring("TwitterConsumerSecret"),
+                      common.settings.download_settings.getstring("TwitterAccessKey"),
+                      common.settings.download_settings.getstring("TwitterAccessSecret"))
 
 
 def download():
@@ -14,14 +14,14 @@ def download():
     count = 0
     total_count = 0
     tweets = []
-    for tweet in twitter.filter(track=download_settings.getstring("Query")):
+    for tweet in twitter.filter(track=common.settings.download_settings.getstring("Query")):
         count += 1
         total_count += 1
         tweets.append(tweet)
         print(total_count, end="\r")
 
         if count == 5000:
-            tweets_collection.insert_many(tweets)
+            common.mongo.tweets_collection.insert_many(tweets)
             tweets.clear()
             count = 0
 

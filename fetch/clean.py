@@ -1,54 +1,52 @@
-from common.mongo import get_tweets, get_full_tweets
-from common.mongo import tweets_collection, users_collection, urls_collection
-from common.settings import clean_settings
-from common.tweets import tweet_time_to_timestamp, tweets_chunk_by_time
-from fetch.utils import clean_tweet, clean_user, filter_urls, filter_tweets
-
-settings = clean_settings
+import common.mongo
+import common.settings
+import common.tweets
+import fetch.utils
 
 
 def _save_tweets_from_full_tweets(tweets):
     print("saving tweets from full tweets")
-    tweets_collection.drop()
+    common.mongo.tweets_collection.drop()
     tweets_dict = {}
     for tweet in tweets:
         if "limit" in tweet:
             continue
 
         if tweet["id_str"] not in tweets_dict:
-            clean_tweet(tweet)
+            fetch.utils.clean_tweet(tweet)
             tweets_dict[tweet["id_str"]] = tweet
 
         # retweet
         if "retweeted_status" in tweet:
             retweet = tweet["retweeted_status"]
             if retweet["id_str"] not in tweets_dict:
-                retweet["timestamp_ms"] = str(tweet_time_to_timestamp(retweet["created_at"]))
-                clean_tweet(retweet)
+                retweet["timestamp_ms"] = str(common.tweets.tweet_time_to_timestamp(retweet["created_at"]))
+                fetch.utils.clean_tweet(retweet)
                 tweets_dict[retweet["id_str"]] = retweet
 
     tweets_sorted_with_timestamp = sorted(list(tweets_dict.values()), key=lambda e: e["timestamp_ms"])
-    sampled_tweets_chunks = tweets_chunk_by_time(tweets_sorted_with_timestamp,
-                                                 sampled=settings.getfloat("TweetSampling"))
+    sampled_tweets_chunks = common.tweets.tweets_chunk_by_time(tweets_sorted_with_timestamp,
+                                                               common.settings.clean_settings.getint("TweetBinning"),
+                                                               common.settings.clean_settings.getfloat("TweetSampling"))
     sampled_tweets = [tweet for sampled_tweets_chunk in sampled_tweets_chunks for tweet in sampled_tweets_chunk]
-    filtered_tweets = filter_tweets(sampled_tweets)
-    tweets_collection.insert_many(filtered_tweets)
+    filtered_tweets = fetch.utils.filter_tweets(sampled_tweets)
+    common.mongo.tweets_collection.insert_many(filtered_tweets)
 
 
 def _save_users_from_tweets(tweets):
     print("saving users from tweets")
-    users_collection.drop()
+    common.mongo.users_collection.drop()
     users_dict = {}
     for tweet in tweets:
         # author
         user = tweet["user"]
-        clean_user(user)
+        fetch.utils.clean_user(user)
         users_dict[user["id_str"]] = user
 
         # retweet
         if "retweeted_status" in tweet:
             user = tweet["retweeted_status"]["user"]
-            clean_user(user)
+            fetch.utils.clean_user(user)
             users_dict[user["id_str"]] = user
 
         # reply
@@ -61,12 +59,12 @@ def _save_users_from_tweets(tweets):
         for mention in tweet["entities"]["user_mentions"]:
             if mention["id_str"] not in users_dict:
                 users_dict[mention["id_str"]] = {"id_str": mention["id_str"]}
-    users_collection.insert_many(users_dict.values())
+    common.mongo.users_collection.insert_many(users_dict.values())
 
 
 def _save_urls_from_tweets(tweets):
     print("saving urls from tweets")
-    urls_collection.drop()
+    common.mongo.urls_collection.drop()
     urls_dict = {}
     for tweet in tweets:
         for url in tweet["entities"]["urls"]:
@@ -87,15 +85,15 @@ def _save_urls_from_tweets(tweets):
                     url["tweet_id_str"] = retweet["id_str"]
                     url["tweet_text"] = retweet["text"]
                     urls_dict[id_str] = url
-    filtered_urls = filter_urls(urls_dict.values())
-    urls_collection.insert_many(filtered_urls)
+    filtered_urls = fetch.utils.filter_urls(urls_dict.values())
+    common.mongo.urls_collection.insert_many(filtered_urls)
 
 
 def clean():
     print("cleaning")
-    _save_tweets_from_full_tweets(get_full_tweets())
-    _save_users_from_tweets(get_tweets(False))
-    _save_urls_from_tweets(get_tweets(False))
+    _save_tweets_from_full_tweets(common.mongo.get_full_tweets())
+    _save_users_from_tweets(common.mongo.get_tweets(False))
+    _save_urls_from_tweets(common.mongo.get_tweets(False))
 
 
 if __name__ == '__main__':

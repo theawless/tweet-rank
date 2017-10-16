@@ -1,17 +1,18 @@
 import collections
 import time
 
+import bs4
+import tornado
 import tornado.httpclient
-from bs4 import BeautifulSoup
-from tornado import ioloop, httpclient
+import tornado.ioloop
 
-from common.mongo import urls_collection, get_urls
-from common.settings import urls_settings
+import common.mongo
+import common.settings
 
 
 # taken from https://github.com/tornadoweb/tornado/issues/1400
 class BacklogClient(object):
-    max_concurrent_requests = urls_settings.getint("MaxConcurrentRequests")
+    max_concurrent_requests = common.settings.urls_settings.getint("MaxConcurrentRequests")
 
     def __init__(self, ioloop):
         self.ioloop = ioloop
@@ -47,24 +48,24 @@ class UrlFetcher:
     def handle_request(self, response, url):
         self.counter += 1
         try:
-            soup = BeautifulSoup(response.body)
+            soup = bs4.BeautifulSoup(response.body)
             url["text"] = soup.title.string
-            urls_collection.update_one({"id_str": url["id_str"]}, {"$set": url})
-            urls_collection.save()
+            common.mongo.urls_collection.update_one({"id_str": url["id_str"]}, {"$set": url})
+            common.mongo.urls_collection.save()
         except Exception:
-            if urls_settings.getboolean("RemoveUrlNotFound"):
-                urls_collection.remove({"id_str": url["id_str"]})
+            if common.settings.urls_settings.getboolean("RemoveUrlNotFound"):
+                common.mongo.urls_collection.remove({"id_str": url["id_str"]})
 
         print(self.counter, response.code, url["expanded_url"], url["text"] if "text" in url else "")
         if not self.backlog.backlog and self.backlog.concurrent_requests == 0:
-            ioloop.IOLoop.instance().stop()
+            tornado.ioloop.IOLoop.instance().stop()
 
     def _start_fetch(self, url):
-        self.backlog.fetch(httpclient.HTTPRequest(url["expanded_url"], method='GET', headers=None),
+        self.backlog.fetch(tornado.httpclient.HTTPRequest(url["expanded_url"], method='GET', headers=None),
                            lambda response: self.handle_request(response, url))
 
     def launch(self, urls):
-        self.ioloop = ioloop.IOLoop.current()
+        self.ioloop = tornado.ioloop.IOLoop.current()
         self.backlog = BacklogClient(self.ioloop)
         for url in urls:
             self._start_fetch(url)
@@ -73,8 +74,8 @@ class UrlFetcher:
 
 def main():
     start_time = time.time()
-    UrlFetcher().launch(get_urls())
-    urls_collection.drop()
+    UrlFetcher().launch(common.mongo.get_urls())
+    common.mongo.urls_collection.drop()
     elapsed_time = time.time() - start_time
     print(elapsed_time)
 

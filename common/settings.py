@@ -1,4 +1,4 @@
-from configparser import ConfigParser
+import configparser
 
 
 class ListSectionProxy:
@@ -21,7 +21,7 @@ class ListSectionProxy:
         return [float(string) for string in self.getstringlist(item)]
 
 
-class ListConfigParser(ConfigParser):
+class ListConfigParser(configparser.ConfigParser):
     def __init__(self):
         super().__init__()
 
@@ -30,12 +30,12 @@ class ListConfigParser(ConfigParser):
         return ListSectionProxy(section_proxy)
 
 
-all_settings = ListConfigParser()
-all_settings.read("data/config.ini")
+full_settings = ListConfigParser()
+full_settings.read("data/config.ini")
 
-network_settings = all_settings["Network"]
-mongo_settings = all_settings["Mongo"]
-clean_settings = all_settings["Clean"]
-annotate_settings = all_settings["Annotate"]
-download_settings = all_settings["Download"]
-urls_settings = all_settings["Urls"]
+network_settings = full_settings["Network"]
+mongo_settings = full_settings["Mongo"]
+clean_settings = full_settings["Clean"]
+annotate_settings = full_settings["Annotate"]
+download_settings = full_settings["Download"]
+urls_settings = full_settings["Urls"]

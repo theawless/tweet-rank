@@ -1,22 +1,22 @@
 from gi.repository import Gtk, Gdk
 
-from common.mongo import get_tweets, annotations_collection
-from common.settings import annotate_settings
-from common.tweets import tweets_chunk_by_time
-
-settings = annotate_settings
+import common.mongo
+import common.settings
+import common.tweets
 
 
 class Application(Gtk.Application):
     def __init__(self):
         super().__init__()
         self._setup_ui()
+        self.annotate_range = common.settings.annotate_settings.getint("Range")
 
+        tweets = common.mongo.get_tweets()
+        hour = common.settings.annotate_settings.getint("Hour")
+        left = common.settings.annotate_settings.getint("Offset")
+        right = left + common.settings.annotate_settings.getint("Limit")
+        self.tweets = common.tweets.tweets_chunk_by_time(tweets)[hour][left:right]
         self.tweet_index = 0
-        hour = settings.getint("Hour")
-        left = settings.getint("Offset")
-        right = settings.getint("Offset") + settings.getint("Limit")
-        self.tweets = tweets_chunk_by_time(get_tweets())[hour][left:right]
         self._update_tweet()
 
     def _setup_ui(self):
@@ -32,7 +32,7 @@ class Application(Gtk.Application):
         self.previous_button = self.ui.get_object("previous_button")
         self.annotation_buttons = []
 
-        for i in range(1, settings.getint("Range") + 1):
+        for i in range(1, self.annotate_range + 1):
             button = Gtk.Button(label=str(i))
             self.annotation_buttons.append(button)
             button.connect("clicked", self.annotate_button_pressed, i)
@@ -60,7 +60,9 @@ class Application(Gtk.Application):
         print("annotation", i)
         tweet = self.tweets[self.tweet_index]
         annotation = {"tweet_id_str": tweet["id_str"], "annotation": str(i)}
-        annotations_collection.update_one({"tweet_id_str": tweet["id_str"]}, {"$set": annotation}, upsert=True)
+        common.mongo.annotations_collection.update_one({"tweet_id_str": tweet["id_str"]},
+                                                       {"$set": annotation},
+                                                       upsert=True)
 
     def key_released(self, _, event_key):
         if event_key.keyval in (Gdk.KEY_N, Gdk.KEY_n):
@@ -69,7 +71,7 @@ class Application(Gtk.Application):
         elif event_key.keyval in (Gdk.KEY_p, Gdk.KEY_P):
             self.previous_button.emit("activate")
             self.previous_button_pressed(None)
-        elif 0 <= event_key.keyval - Gdk.KEY_1 <= settings.getint("Range"):
+        elif 0 <= event_key.keyval - Gdk.KEY_1 <= self.annotate_range:
             self.annotation_buttons[event_key.keyval - Gdk.KEY_1].emit("activate")
             self.annotate_button_pressed(None, event_key.keyval - Gdk.KEY_0)
 
