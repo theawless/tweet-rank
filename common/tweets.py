@@ -7,22 +7,22 @@ import common.utils
 millisecond_in_hour = 60 * 60 * 1000
 
 
-def tweet_time_to_timestamp(tweet_time):
+def time_to_timestamp(tweet_time):
     struct_time = time.strptime(tweet_time, '%a %b %d %H:%M:%S +0000 %Y')
     return int(time.mktime(struct_time) * 1000)
 
 
-def tweets_window_by_nearby(tweets, interval=4):
+def window_by_nearby(tweets, interval=4):
     interval *= millisecond_in_hour
     nearby_tweet_indexes = collections.deque()
     right_tweet_index_iter = iter(range(len(tweets)))
     for tweet_index in range(len(tweets)):
-        tweet_time = int(float(tweets[tweet_index]["timestamp_ms"]))
+        tweet_time = float(tweets[tweet_index]["timestamp_ms"])
 
         # remove from left
         while nearby_tweet_indexes:
             left_tweet_index = nearby_tweet_indexes[0]
-            left_tweet_time = int(float(tweets[left_tweet_index]["timestamp_ms"]))
+            left_tweet_time = float(tweets[left_tweet_index]["timestamp_ms"])
             if (tweet_time - left_tweet_time) / interval < 1:
                 break
             nearby_tweet_indexes.popleft()
@@ -30,7 +30,7 @@ def tweets_window_by_nearby(tweets, interval=4):
         # add to right
         right_tweet_index = next(right_tweet_index_iter, None)
         while right_tweet_index:
-            right_tweet_time = int(float(tweets[right_tweet_index]["timestamp_ms"]))
+            right_tweet_time = float(tweets[right_tweet_index]["timestamp_ms"])
             if (right_tweet_time - tweet_time) / interval > 1:
                 break
             nearby_tweet_indexes.append(right_tweet_index)
@@ -39,7 +39,7 @@ def tweets_window_by_nearby(tweets, interval=4):
         nearby_tweet_indexes = collections.deque(nearby_tweet_indexes)
 
 
-def tweets_chunk_by_time(tweets, interval=1, sampled=1):
+def chunk_by_time(tweets, interval=1, sampled=1):
     print("chunking tweets by time")
     interval *= millisecond_in_hour
     start_time = float(tweets[0]["timestamp_ms"])
@@ -65,7 +65,7 @@ personal_pronouns = ["i", "me", "mine", "my"]
 twitter_slangs = open("data/twitter-slangs.txt").readlines()
 
 
-def tweets_remove_spam(tweets):
+def remove_spam(tweets):
     print("removing tweet spam")
     filtered_tweets = []
     for tweet in tweets:

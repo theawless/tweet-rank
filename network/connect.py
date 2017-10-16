@@ -1,9 +1,8 @@
-import sys
-
 import numpy
 import scipy.sparse
 import sklearn.feature_extraction.text
 import sklearn.metrics.pairwise
+from tqdm import tqdm
 
 import common.tweets
 import common.utils
@@ -12,29 +11,25 @@ import network
 
 def add_tweet_vertices(graph):
     print("adding tweet nodes")
-    for i in range(len(network.tweets)):
+    for i in tqdm(range(len(network.tweets))):
         graph.add_node(network.tweets[i]["id_str"], index=i, tweet=True, score=0)
 
 
 def add_user_vertices(graph):
     print("adding user nodes")
-    for i in range(len(network.users)):
+    for i in tqdm(range(len(network.users))):
         graph.add_node(network.users[i]["id_str"], index=i, user=True, score=0)
 
 
 def add_doc_vertices(graph):
     print("adding doc nodes")
-    for i in range(len(network.docs)):
+    for i in tqdm(range(len(network.docs))):
         graph.add_node(network.docs[i]["id_str"], index=i, doc=True, score=0)
 
 
 def add_tweet_tweet_edges(graph, threshold):
     print("adding tweet tweet nodes")
-    count = 0
-    for r, c in zip(*(network.tweets_similarity_matrix > threshold).nonzero()):
-        count += 1
-        sys.stdout.write('\rCount: %d' % count)
-        sys.stdout.flush()
+    for r, c in tqdm(zip(*(network.tweets_similarity_matrix > threshold).nonzero())):
         w = network.tweets_similarity_matrix[r, c]
         if r < c and w > threshold:
             graph.add_edge(network.tweets[r]["id_str"], network.tweets[c]["id_str"], weight=w)
@@ -42,12 +37,8 @@ def add_tweet_tweet_edges(graph, threshold):
 
 
 def add_doc_doc_edges(graph, threshold):
-    print("\nadding doc doc edges")
-    count = 0
-    for r, c in zip(*(network.docs_similarity_matrix > threshold).nonzero()):
-        count += 1
-        sys.stdout.write('\rCount: %d' % count)
-        sys.stdout.flush()
+    print("adding doc doc edges")
+    for r, c in tqdm(zip(*(network.docs_similarity_matrix > threshold).nonzero())):
         w = network.docs_similarity_matrix[r, c]
         if r < c and w > threshold:
             graph.add_edge(network.docs[r]["id_str"], network.docs[c]["id_str"], weight=w)
@@ -55,8 +46,8 @@ def add_doc_doc_edges(graph, threshold):
 
 
 def add_user_user_edges(graph):
-    print("\nadding user user edges")
-    for tweet in network.tweets:
+    print("adding user user edges")
+    for tweet in tqdm(network.tweets):
         # author
         user_i = tweet["user"]["id_str"]
         user_js = []
@@ -87,12 +78,7 @@ def add_user_user_edges(graph):
 
 def add_tweet_user_edges(graph, threshold):
     print("adding tweet user edges")
-    count = 0
-    for tweet_j_index, nearby_tweet_indexes in common.tweets.tweets_window_by_nearby(network.tweets):
-        count += 1
-        sys.stdout.write('\rCount: %d' % count)
-        sys.stdout.flush()
-
+    for tweet_j_index, nearby_tweet_indexes in tqdm(common.tweets.window_by_nearby(network.tweets)):
         # implicit edge
         tweet_j = network.tweets[tweet_j_index]
         graph.add_edge(tweet_j["id_str"], tweet_j["user"]["id_str"], weight=1)
@@ -128,7 +114,7 @@ def add_doc_tweet_edges(graph, threshold):
     tfidf_transformer.transform(tweets_matrix)
 
     results = []
-    for doc in network.docs:
+    for doc in tqdm(network.docs):
         doc_text = doc['text']
         doc_vector = vectorizer.transform([doc_text])
 
@@ -140,11 +126,7 @@ def add_doc_tweet_edges(graph, threshold):
         results.append(result)
 
     doc_tweet_matrix = scipy.sparse.csr_matrix(results)
-    count = 0
-    for r, c in zip(*(doc_tweet_matrix > threshold).nonzero()):
-        count += 1
-        sys.stdout.write('\rCount: %d' % count)
-        sys.stdout.flush()
+    for r, c in tqdm(zip(*(doc_tweet_matrix > threshold).nonzero())):
         w = doc_tweet_matrix[r, c]
         graph.add_edge(network.docs[r]["id_str"], network.tweets[c]["id_str"], weight=w)
         graph.add_edge(network.tweets[c]["id_str"], network.docs[r]["id_str"], weight=w)

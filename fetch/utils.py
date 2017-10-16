@@ -24,7 +24,7 @@ def filter_urls(urls):
 
 def clean_tweet(tweet):
     for key in tweet.copy().keys():
-        if key not in common.settings.clean_settings.getstringlist("TweetKeysToSave"):
+        if key not in common.settings.clean.getstringlist("TweetKeysToSave"):
             tweet.pop(key, None)
 
     clean_user(tweet["user"])
@@ -41,23 +41,23 @@ def clean_tweet(tweet):
 
 def clean_user(user):
     for key in user.copy().keys():
-        if key not in common.settings.clean_settings.getstringlist("TweetUserKeysToSave"):
+        if key not in common.settings.clean.getstringlist("TweetUserKeysToSave"):
             user.pop(key, None)
 
 
 def _clean_entities(entities):
     for key in entities.copy().keys():
-        if key not in common.settings.clean_settings.getstringlist("TweetEntitiesKeysToSave"):
+        if key not in common.settings.clean.getstringlist("TweetEntitiesKeysToSave"):
             entities.pop(key, None)
 
 
 def clean_url(url):
     for key in url.copy().keys():
-        if key not in common.settings.clean_settings.getstringlist("TweetUrlKeysToSave"):
+        if key not in common.settings.clean.getstringlist("TweetUrlKeysToSave"):
             url.pop(key, None)
 
 
 def _clean_user_mention(user_mention):
     for key in user_mention.copy().keys():
-        if key not in common.settings.clean_settings.getstringlist("TweetUserMentionKeysToSave"):
+        if key not in common.settings.clean.getstringlist("TweetUserMentionKeysToSave"):
             user_mention.pop(key, None)

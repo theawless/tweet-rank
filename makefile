@@ -1,27 +1,30 @@
-install_common:
+install:
 	pip3 install --user --upgrade pip
-	pip3 install --user pymongo
-	pip3 install --user autopep8
+	pip3 install --user --upgrade pymongo autopep8 tqdm
+	pip3 install --user --upgrade twarc
 
-install_fetch: install_common
-	pip3 install --user twarc
-
-install_analyse: install_common
-	pip3 install --user nltk networkx matplotlib scipy scikit-learn
+	pip3 install --user --upgrade networkx matplotlib scipy scikit-learn
+	pip3 install --user --upgrade nltk
 	python3 -c "import nltk; nltk.download('stopwords')"
 	python3 -c "import nltk; nltk.download('punkt')"
 
 load_sample:
-	mongoimport data/sample-tweets.json  --collection full_tweets --db vegas
+	mongoimport data/sample-tweets.json --collection full_tweets --db vegas
 
-clean:
-	python3 -m fetch.clean
+assemble:
+	python3 -m fetch.assemble
 	mongo vegas --eval 'db.tweets.createIndex({"timestamp_ms" : 1})'
 
 download:
 	python3 -m fetch.download
 
-graph:
+docs:
+	python3 -m fetch.docs
+
+urls:
+	python3 -m fetch.urls
+
+main:
 	python3 -m network.main
 
 tweet_top_terms:

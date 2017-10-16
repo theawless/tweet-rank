@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 import common.mongo
 import common.settings
 import common.tweets
@@ -8,7 +10,7 @@ def _save_tweets_from_full_tweets(tweets):
     print("saving tweets from full tweets")
     common.mongo.tweets_collection.drop()
     tweets_dict = {}
-    for tweet in tweets:
+    for tweet in tqdm(tweets):
         if "limit" in tweet:
             continue
 
@@ -20,15 +22,19 @@ def _save_tweets_from_full_tweets(tweets):
         if "retweeted_status" in tweet:
             retweet = tweet["retweeted_status"]
             if retweet["id_str"] not in tweets_dict:
-                retweet["timestamp_ms"] = str(common.tweets.tweet_time_to_timestamp(retweet["created_at"]))
+                retweet["timestamp_ms"] = str(common.tweets.time_to_timestamp(retweet["created_at"]))
                 fetch.utils.clean_tweet(retweet)
                 tweets_dict[retweet["id_str"]] = retweet
 
     tweets_sorted_with_timestamp = sorted(list(tweets_dict.values()), key=lambda e: e["timestamp_ms"])
-    sampled_tweets_chunks = common.tweets.tweets_chunk_by_time(tweets_sorted_with_timestamp,
-                                                               common.settings.clean_settings.getint("TweetBinning"),
-                                                               common.settings.clean_settings.getfloat("TweetSampling"))
-    sampled_tweets = [tweet for sampled_tweets_chunk in sampled_tweets_chunks for tweet in sampled_tweets_chunk]
+    sampled_tweets_chunks = common.tweets.chunk_by_time(tweets_sorted_with_timestamp,
+                                                        common.settings.clean.getint("TweetBinning"),
+                                                        common.settings.clean.getfloat("TweetSampling"))
+    sampled_tweets = []
+    for i in range(len(sampled_tweets_chunks)):
+        for tweet in sampled_tweets_chunks[i]:
+            tweet["hour"] = i
+            sampled_tweets.append(tweet)
     filtered_tweets = fetch.utils.filter_tweets(sampled_tweets)
     common.mongo.tweets_collection.insert_many(filtered_tweets)
 
@@ -37,7 +43,7 @@ def _save_users_from_tweets(tweets):
     print("saving users from tweets")
     common.mongo.users_collection.drop()
     users_dict = {}
-    for tweet in tweets:
+    for tweet in tqdm(tweets):
         # author
         user = tweet["user"]
         fetch.utils.clean_user(user)
@@ -66,7 +72,7 @@ def _save_urls_from_tweets(tweets):
     print("saving urls from tweets")
     common.mongo.urls_collection.drop()
     urls_dict = {}
-    for tweet in tweets:
+    for tweet in tqdm(tweets):
         for url in tweet["entities"]["urls"]:
             id_str = url["url"]
             if id_str not in urls_dict:
@@ -89,12 +95,12 @@ def _save_urls_from_tweets(tweets):
     common.mongo.urls_collection.insert_many(filtered_urls)
 
 
-def clean():
-    print("cleaning")
+def assemble():
+    print("assembling")
     _save_tweets_from_full_tweets(common.mongo.get_full_tweets())
     _save_users_from_tweets(common.mongo.get_tweets(False))
     _save_urls_from_tweets(common.mongo.get_tweets(False))
 
 
 if __name__ == '__main__':
-    clean()
+    assemble()

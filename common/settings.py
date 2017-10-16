@@ -30,12 +30,13 @@ class ListConfigParser(configparser.ConfigParser):
         return ListSectionProxy(section_proxy)
 
 
-full_settings = ListConfigParser()
-full_settings.read("data/config.ini")
+full = ListConfigParser()
+print("loading settings")
+full.read("data/config.ini")
 
-network_settings = full_settings["Network"]
-mongo_settings = full_settings["Mongo"]
-clean_settings = full_settings["Clean"]
-annotate_settings = full_settings["Annotate"]
-download_settings = full_settings["Download"]
-urls_settings = full_settings["Urls"]
+network = full["Network"]
+mongo = full["Mongo"]
+clean = full["Clean"]
+annotate = full["Annotate"]
+download = full["Download"]
+urls = full["Urls"]

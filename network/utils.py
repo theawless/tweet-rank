@@ -140,14 +140,14 @@ def dcg_at_k(graph, k):
     dm, i = 0, 1
     for annotation in annotations_m:
         annotation_score = int(annotation["annotation"])
-        dm += (numpy.power(2, annotation_score) - 1) / (numpy.log(i + 1, 2))
+        dm += (2 ** annotation_score - 1) / (numpy.log(i + 1, 2))
         i += 1
 
     annotations_j = sorted(annotations_j, reverse=True, key=lambda x: x["score"])[:k + 1]
     dj, i = 0, 1
     for annotation in annotations_j:
         annotation_score = int(annotation["annotation"])
-        dj += (numpy.power(2, annotation_score) - 1) / (numpy.log(i + 1, 2))
+        dj += (2 ** annotation_score - 1) / (numpy.log(i + 1, 2))
         i += 1
 
     print("DCG: ", dm / compute_idcg(annotations_m), dj / compute_idcg(annotations_j))

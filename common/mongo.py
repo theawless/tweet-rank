@@ -2,16 +2,16 @@ import pymongo
 
 import common.settings
 
-client = pymongo.MongoClient(common.settings.mongo_settings.getstring("Host"),
-                             common.settings.mongo_settings.getint("Port"))
-database = client[common.settings.mongo_settings.getstring("Database")]
+client = pymongo.MongoClient(common.settings.mongo.getstring("Host"),
+                             common.settings.mongo.getint("Port"))
+database = client[common.settings.mongo.getstring("Database")]
 
-full_tweets_collection = database[common.settings.mongo_settings.getstring("FullTweetsCollection")]
-tweets_collection = database[common.settings.mongo_settings.getstring("TweetsCollection")]
-users_collection = database[common.settings.mongo_settings.getstring("UsersCollection")]
-docs_collection = database[common.settings.mongo_settings.getstring("DocsCollection")]
-annotations_collection = database[common.settings.mongo_settings.getstring("AnnotationsCollection")]
-urls_collection = database[common.settings.mongo_settings.getstring("UrlsCollection")]
+full_tweets_collection = database[common.settings.mongo.getstring("FullTweetsCollection")]
+tweets_collection = database[common.settings.mongo.getstring("TweetsCollection")]
+users_collection = database[common.settings.mongo.getstring("UsersCollection")]
+docs_collection = database[common.settings.mongo.getstring("DocsCollection")]
+annotations_collection = database[common.settings.mongo.getstring("AnnotationsCollection")]
+urls_collection = database[common.settings.mongo.getstring("UrlsCollection")]
 
 
 def get_full_tweets(limit=0):

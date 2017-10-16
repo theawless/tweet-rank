@@ -8,19 +8,19 @@ import common.tweets
 class Application(Gtk.Application):
     def __init__(self):
         super().__init__()
+        self.annotate_range = common.settings.annotate.getint("Range")
         self._setup_ui()
-        self.annotate_range = common.settings.annotate_settings.getint("Range")
 
         tweets = common.mongo.get_tweets()
-        hour = common.settings.annotate_settings.getint("Hour")
-        left = common.settings.annotate_settings.getint("Offset")
-        right = left + common.settings.annotate_settings.getint("Limit")
-        self.tweets = common.tweets.tweets_chunk_by_time(tweets)[hour][left:right]
+        hour = common.settings.annotate.getint("Hour")
+        left = common.settings.annotate.getint("Offset")
+        right = left + common.settings.annotate.getint("Limit")
+        self.tweets = common.tweets.chunk_by_time(tweets)[hour][left:right]
         self.tweet_index = 0
         self._update_tweet()
 
     def _setup_ui(self):
-        self.ui = Gtk.Builder.new_from_file("data/annotate.glade")
+        self.ui = Gtk.Builder.new_from_file("data/annotate.ui")
         self.ui.connect_signals(self)
         self.window = self.ui.get_object("application_window")
         self.window.connect("key-release-event", self.key_released)
@@ -28,6 +28,8 @@ class Application(Gtk.Application):
         self.tweet_index_label = self.ui.get_object("tweet_index_label")
         self.tweet_text_label = self.ui.get_object("tweet_text_label")
         self.button_box = self.ui.get_object("button_box")
+        self.help_button = self.ui.get_object("help_button")
+        self.help_button.set_tooltip_text(common.settings.annotate.getstring("HelpText"))
         self.next_button = self.ui.get_object("next_button")
         self.previous_button = self.ui.get_object("previous_button")
         self.annotation_buttons = []
@@ -57,7 +59,8 @@ class Application(Gtk.Application):
         self._update_tweet()
 
     def annotate_button_pressed(self, _, i):
-        print("annotation", i)
+        if not (0 <= self.tweet_index < len(self.tweets)):
+            return
         tweet = self.tweets[self.tweet_index]
         annotation = {"tweet_id_str": tweet["id_str"], "annotation": str(i)}
         common.mongo.annotations_collection.update_one({"tweet_id_str": tweet["id_str"]},

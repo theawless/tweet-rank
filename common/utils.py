@@ -11,9 +11,9 @@ def compute_similarity_matrix(items):
     vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(tokenizer=tokenize_text,
                                                                  stop_words='english')
     tfidf = vectorizer.fit_transform(items)
-    sim_matrix = tfidf * tfidf.T
+    similarity_matrix = tfidf * tfidf.T
 
-    return scipy.sparse.csr_matrix(sim_matrix)
+    return scipy.sparse.csr_matrix(similarity_matrix)
 
 
 def tokenize_text(text):
@@ -26,10 +26,10 @@ def tokenize_text(text):
 
 
 def save_graph(graph, name):
-    print("saving graph")
+    print("saving graph", name)
     networkx.write_gpickle(graph, "data/" + name + ".pickle")
 
 
 def read_graph(name):
-    print("reading graph")
+    print("reading graph", name)
     return networkx.read_gpickle("data/" + name + ".pickle")

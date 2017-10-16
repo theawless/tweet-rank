@@ -2,6 +2,7 @@ import urllib.request
 
 import bs4
 import google
+from tqdm import tqdm
 
 import common.mongo
 
@@ -15,15 +16,15 @@ def fill_doc(url, doc):
         doc["id_str"] = url
         doc["text"] = soup.title.text
         common.mongo.docs_collection.update_one({"id_str": doc["id_str"]}, {"$set": doc}, upsert=True)
-        print(doc)
     except Exception:
         pass
 
 
 def fill_docs():
+    print("filling docs")
     for query in queries:
         print("searching for", query)
-        for url in google.search(query, num=1, stop=3):
+        for url in tqdm(google.search(query, num=1, stop=3)):
             doc = {"query": query}
             fill_doc(url, doc)
 

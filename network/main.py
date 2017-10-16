@@ -21,7 +21,7 @@ def make_graphs():
 
 
 def homo(t2t_graph, u2u_graph, d2d_graph):
-    network.connect.add_tweet_tweet_edges(t2t_graph, common.settings.network_settings.getfloat("TweetTweetThreshold"))
+    network.connect.add_tweet_tweet_edges(t2t_graph, common.settings.network.getfloat("TweetTweetThreshold"))
     print("computing t2t graph pagerank")
     network.utils.compute_pagerank(t2t_graph)
     common.utils.save_graph(t2t_graph, "tweets-text-rank")
@@ -31,23 +31,23 @@ def homo(t2t_graph, u2u_graph, d2d_graph):
     network.utils.compute_pagerank(u2u_graph)
     common.utils.save_graph(u2u_graph, "users-text-rank")
 
-    network.connect.add_doc_doc_edges(d2d_graph, common.settings.network_settings.getfloat("DocDocThreshold"))
+    network.connect.add_doc_doc_edges(d2d_graph, common.settings.network.getfloat("DocDocThreshold"))
     print("computing t2t graph pagerank")
     network.utils.compute_pagerank(d2d_graph)
     common.utils.save_graph(d2d_graph, "docs-text-rank")
 
 
 def hetero(graph):
-    network.connect.add_tweet_user_edges(graph, common.settings.network_settings.getfloat("TweetUserThreshold"))
+    network.connect.add_tweet_user_edges(graph, common.settings.network.getfloat("TweetUserThreshold"))
     common.utils.save_graph(graph, "full-user-tweet-links")
 
-    network.connect.add_doc_tweet_edges(graph, common.settings.network_settings.getfloat("DocTweetThreshold"))
+    network.connect.add_doc_tweet_edges(graph, common.settings.network.getfloat("DocTweetThreshold"))
     common.utils.save_graph(graph, "full-doc-tweet-links")
 
-    network.utils.compute_trihits(graph, {'ut': common.settings.network_settings.getfloat("LambdaUserTweet"),
-                                          'tu': common.settings.network_settings.getfloat("LambdaTweetUser"),
-                                          'dt': common.settings.network_settings.getfloat("LambdaDocTweet"),
-                                          'td': common.settings.network_settings.getfloat("LambdaTweetDoc")})
+    network.utils.compute_trihits(graph, {'ut': common.settings.network.getfloat("LambdaUserTweet"),
+                                          'tu': common.settings.network.getfloat("LambdaTweetUser"),
+                                          'dt': common.settings.network.getfloat("LambdaDocTweet"),
+                                          'td': common.settings.network.getfloat("LambdaTweetDoc")})
     common.utils.save_graph(graph, "full-trihits")
 
 
@@ -64,7 +64,6 @@ def main():
 
 
 def print_results(scores):
-    print()
     for text, score in scores:
         print(text, format(score, '.32f'))
 
