@@ -3,8 +3,8 @@ from sys import argv
 from nltk import FreqDist
 from nltk.corpus import stopwords
 
-from analyse import tweets
 from common.utils import tokenize_text
+from network import tweets
 
 
 def remove_stop_words(terms):

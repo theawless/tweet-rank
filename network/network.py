@@ -5,10 +5,10 @@ import scipy.sparse
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from analyse import tweets, users, docs, docs_similarity_matrix
-from analyse import tweets_similarity_matrix
 from common.tweets import tweets_window_by_nearby
 from common.utils import tokenize_text
+from network import tweets, users, docs, docs_similarity_matrix
+from network import tweets_similarity_matrix
 
 
 def add_tweet_vertices(graph):

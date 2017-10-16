@@ -1,7 +1,10 @@
 from common.mongo import get_tweets, get_full_tweets
 from common.mongo import tweets_collection, users_collection, urls_collection
+from common.settings import clean_settings
 from common.tweets import tweet_time_to_timestamp, tweets_chunk_by_time
 from fetch.utils import clean_tweet, clean_user, filter_urls, filter_tweets
+
+settings = clean_settings
 
 
 def _save_tweets_from_full_tweets(tweets):
@@ -25,7 +28,8 @@ def _save_tweets_from_full_tweets(tweets):
                 tweets_dict[retweet["id_str"]] = retweet
 
     tweets_sorted_with_timestamp = sorted(list(tweets_dict.values()), key=lambda e: e["timestamp_ms"])
-    sampled_tweets_chunks = tweets_chunk_by_time(tweets_sorted_with_timestamp, sampled=0.1)
+    sampled_tweets_chunks = tweets_chunk_by_time(tweets_sorted_with_timestamp,
+                                                 sampled=settings.getfloat("TweetSampling"))
     sampled_tweets = [tweet for sampled_tweets_chunk in sampled_tweets_chunks for tweet in sampled_tweets_chunk]
     filtered_tweets = filter_tweets(sampled_tweets)
     tweets_collection.insert_many(filtered_tweets)

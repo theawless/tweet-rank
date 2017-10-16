@@ -1,11 +1,12 @@
 from twarc import Twarc
 
 from common.mongo import tweets_collection
+from common.settings import download_settings
 
-twitter = Twarc("consumer key",
-                "consumer secret",
-                "access key",
-                "access secret")
+twitter = Twarc(download_settings.getstring("TwitterConsumerKey"),
+                download_settings.getstring("TwitterConsumerSecret"),
+                download_settings.getstring("TwitterAccessKey"),
+                download_settings.getstring("TwitterAccessSecret"))
 
 
 def download():
@@ -13,7 +14,7 @@ def download():
     count = 0
     total_count = 0
     tweets = []
-    for tweet in twitter.filter(track="query"):
+    for tweet in twitter.filter(track=download_settings.getstring("Query")):
         count += 1
         total_count += 1
         tweets.append(tweet)

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from analyse import tweets, users
+from network import tweets, users
 
 user_ids = set()
 tweet_ids = set()

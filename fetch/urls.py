@@ -6,15 +6,16 @@ from bs4 import BeautifulSoup
 from tornado import ioloop, httpclient
 
 from common.mongo import urls_collection, get_urls
+from common.settings import urls_settings
 
 
 # taken from https://github.com/tornadoweb/tornado/issues/1400
 class BacklogClient(object):
-    MAX_CONCURRENT_REQUESTS = 30
+    max_concurrent_requests = urls_settings.getint("MaxConcurrentRequests")
 
     def __init__(self, ioloop):
         self.ioloop = ioloop
-        self.client = tornado.httpclient.AsyncHTTPClient(max_clients=self.MAX_CONCURRENT_REQUESTS)
+        self.client = tornado.httpclient.AsyncHTTPClient(max_clients=self.max_concurrent_requests)
         self.client.configure(None, defaults=dict(connect_timeout=200, request_timeout=300))
         self.backlog = collections.deque()
         self.concurrent_requests = 0
@@ -28,14 +29,13 @@ class BacklogClient(object):
         return wrapped
 
     def try_run_request(self):
-        while self.backlog and self.concurrent_requests < self.MAX_CONCURRENT_REQUESTS:
+        while self.backlog and self.concurrent_requests < self.max_concurrent_requests:
             request, callback = self.backlog.popleft()
             self.client.fetch(request, callback=callback)
             self.concurrent_requests += 1
 
     def fetch(self, request, callback=None):
         wrapped = self.__get_callback(callback)
-
         self.backlog.append((request, wrapped))
         self.try_run_request()
 
@@ -52,8 +52,8 @@ class UrlFetcher:
             urls_collection.update_one({"id_str": url["id_str"]}, {"$set": url})
             urls_collection.save()
         except Exception:
-            pass
-            # urls_collection.remove({"id_str": url["id_str"]})
+            if urls_settings.getboolean("RemoveUrlNotFound"):
+                urls_collection.remove({"id_str": url["id_str"]})
 
         print(self.counter, response.code, url["expanded_url"], url["text"] if "text" in url else "")
         if not self.backlog.backlog and self.backlog.concurrent_requests == 0:

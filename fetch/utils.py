@@ -1,3 +1,4 @@
+from common.settings import clean_settings
 from common.utils import tokenize_text
 
 
@@ -21,13 +22,9 @@ def filter_urls(urls):
     return filtered_urls
 
 
-save_tweet_keys = ["text", "id_str", "in_reply_to_user_id_str", "created_at", "entities", "retweeted_status", "user",
-                   "timestamp_ms"]
-
-
 def clean_tweet(tweet):
     for key in tweet.copy().keys():
-        if key not in save_tweet_keys:
+        if key not in clean_settings.getstringlist("TweetKeysToSave"):
             tweet.pop(key, None)
 
     clean_user(tweet["user"])
@@ -42,37 +39,25 @@ def clean_tweet(tweet):
         clean_tweet(tweet["retweeted_status"])
 
 
-save_user_keys = ["id_str"]
-
-
 def clean_user(user):
     for key in user.copy().keys():
-        if key not in save_user_keys:
+        if key not in clean_settings.getstringlist("TweetUserKeysToSave"):
             user.pop(key, None)
-
-
-save_entities_keys = ["user_mentions", "urls"]
 
 
 def _clean_entities(entities):
     for key in entities.copy().keys():
-        if key not in save_entities_keys:
+        if key not in clean_settings.getstringlist("TweetEntitiesKeysToSave"):
             entities.pop(key, None)
-
-
-save_url_keys = ["expanded_url", "url"]
 
 
 def clean_url(url):
     for key in url.copy().keys():
-        if key not in save_url_keys:
+        if key not in clean_settings.getstringlist("TweetUrlKeysToSave"):
             url.pop(key, None)
-
-
-save_user_mention_keys = ["id_str"]
 
 
 def _clean_user_mention(user_mention):
     for key in user_mention.copy().keys():
-        if key not in save_user_mention_keys:
+        if key not in clean_settings.getstringlist("TweetUserMentionKeysToSave"):
             user_mention.pop(key, None)

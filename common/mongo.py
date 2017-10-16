@@ -1,19 +1,18 @@
 from pymongo import MongoClient, ASCENDING
 
-client = MongoClient('localhost', 27017)
-vegas_db = client.vegas
+from common.settings import mongo_settings
 
-full_tweets_collection = vegas_db.full_tweets
+settings = mongo_settings
 
-tweets_collection = vegas_db.tweets
+client = MongoClient(settings.getstring("Host"), settings.getint("Port"))
+database = client[settings.getstring("Database")]
 
-users_collection = vegas_db.users
-
-docs_collection = vegas_db.docs
-
-annotations_collection = vegas_db.annotations
-
-urls_collection = vegas_db.urls
+full_tweets_collection = database[settings.getstring("FullTweetsCollection")]
+tweets_collection = database[settings.getstring("TweetsCollection")]
+users_collection = database[settings.getstring("UsersCollection")]
+docs_collection = database[settings.getstring("DocsCollection")]
+annotations_collection = database[settings.getstring("AnnotationsCollection")]
+urls_collection = database[settings.getstring("UrlsCollection")]
 
 
 def get_full_tweets(limit=0):

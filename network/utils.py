@@ -5,8 +5,8 @@ from networkx import pagerank_numpy
 from numpy import asarray, zeros, absolute, asscalar
 from sklearn.preprocessing import normalize
 
-from analyse import docs, tweets, users, tweets_similarity_matrix
 from common.mongo import annotations_collection
+from network import docs, tweets, users, tweets_similarity_matrix
 
 
 def compute_pagerank(graph):
@@ -116,9 +116,9 @@ def compute_idcg(annotations):
 
 
 def dcg_at_k(graph, k):
-    from common.mongo import vegas_db
-    tweets_m_collection = vegas_db.tweets_m
-    tweets_j_collection = vegas_db.tweets_j
+    from common.mongo import database
+    tweets_m_collection = database.tweets_m
+    tweets_j_collection = database.tweets_j
     tweets_m = list(tweets_m_collection.find())
     tweets_j = list(tweets_j_collection.find())
     annotations_m = []

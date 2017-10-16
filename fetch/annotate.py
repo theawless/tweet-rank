@@ -1,23 +1,22 @@
-from sys import argv
-
 from gi.repository import Gtk, Gdk
 
 from common.mongo import get_tweets, annotations_collection
+from common.settings import annotate_settings
 from common.tweets import tweets_chunk_by_time
+
+settings = annotate_settings
 
 
 class Application(Gtk.Application):
-    annotate_range = 5
-
     def __init__(self):
         super().__init__()
         self._setup_ui()
 
         self.tweet_index = 0
-        self.hour = int(argv[1])
-        self.left = int(argv[2])
-        self.right = int(argv[3])
-        self.tweets = tweets_chunk_by_time(get_tweets())[self.hour][self.left:self.right]
+        hour = settings.getint("Hour")
+        left = settings.getint("Offset")
+        right = settings.getint("Offset") + settings.getint("Limit")
+        self.tweets = tweets_chunk_by_time(get_tweets())[hour][left:right]
         self._update_tweet()
 
     def _setup_ui(self):
@@ -33,7 +32,7 @@ class Application(Gtk.Application):
         self.previous_button = self.ui.get_object("previous_button")
         self.annotation_buttons = []
 
-        for i in range(1, self.annotate_range + 1):
+        for i in range(1, settings.getint("Range") + 1):
             button = Gtk.Button(label=str(i))
             self.annotation_buttons.append(button)
             button.connect("clicked", self.annotate_button_pressed, i)
@@ -70,7 +69,7 @@ class Application(Gtk.Application):
         elif event_key.keyval in (Gdk.KEY_p, Gdk.KEY_P):
             self.previous_button.emit("activate")
             self.previous_button_pressed(None)
-        elif 0 <= event_key.keyval - Gdk.KEY_1 <= self.annotate_range:
+        elif 0 <= event_key.keyval - Gdk.KEY_1 <= settings.getint("Range"):
             self.annotation_buttons[event_key.keyval - Gdk.KEY_1].emit("activate")
             self.annotate_button_pressed(None, event_key.keyval - Gdk.KEY_0)
 

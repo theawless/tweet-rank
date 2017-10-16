@@ -1,5 +1,5 @@
 install_common:
-	pip3 install --upgrade pip
+	pip3 install --user --upgrade pip
 	pip3 install --user pymongo
 	pip3 install --user autopep8
 
@@ -22,13 +22,13 @@ download:
 	python3 -m fetch.download
 
 graph:
-	python3 -m analyse.analyse
+	python3 -m network.main
 
 tweet_top_terms:
-	python3 -m analyse.stuff tweet_top_terms
+	python3 -m stats.stuff tweet_top_terms
 
 annotate:
-	python3 -m fetch.annotate 57 500 600
+	python3 -m fetch.annotate
 
 codestyle:
 	autopep8 . --recursive --in-place --verbose --max-line-length 120
