@@ -11,11 +11,9 @@ class Application(Gtk.Application):
         self.annotate_range = common.settings.annotate.getint("Range")
         self._setup_ui()
 
-        tweets = common.mongo.get_tweets()
-        hour = common.settings.annotate.getint("Hour")
         left = common.settings.annotate.getint("Offset")
         right = left + common.settings.annotate.getint("Limit")
-        self.tweets = common.tweets.chunk_by_time(tweets)[hour][left:right]
+        self.tweets = common.mongo.get_tweets(hour=common.settings.annotate.getint("Hour"))[left:right]
         self.tweet_index = 0
         self._update_tweet()
 
@@ -42,40 +40,45 @@ class Application(Gtk.Application):
             button.show()
 
     def _update_tweet(self):
-        if not (0 <= self.tweet_index < len(self.tweets)):
-            return
         tweet = self.tweets[self.tweet_index]
         self.tweet_text_label.set_label(tweet["text"])
         self.tweet_index_label.set_label("Index: " + str(self.tweet_index) + " " +
                                          "Out of: " + str(len(self.tweets)) + " " +
                                          "Tweet ID: " + tweet["id_str"])
 
+        for button in self.annotation_buttons:
+            button.get_style_context().remove_class("suggested-action")
+        annotation = common.mongo.annotations_collection.find_one({"id_str": tweet["id_str"]})
+        if annotation is not None:
+            index = annotation["annotation"] - 1
+            if 0 <= index < self.annotate_range:
+                self.annotation_buttons[index].get_style_context().add_class("suggested-action")
+
     def next_button_pressed(self, _):
+        if self.tweet_index == len(self.tweets) - 1:
+            return
         self.tweet_index += 1
         self._update_tweet()
 
     def previous_button_pressed(self, _):
+        if 0 == self.tweet_index:
+            return
         self.tweet_index -= 1
         self._update_tweet()
 
     def annotate_button_pressed(self, _, i):
-        if not (0 <= self.tweet_index < len(self.tweets)):
-            return
         tweet = self.tweets[self.tweet_index]
-        annotation = {"tweet_id_str": tweet["id_str"], "annotation": str(i)}
-        common.mongo.annotations_collection.update_one({"tweet_id_str": tweet["id_str"]},
-                                                       {"$set": annotation},
+        annotation = {"id_str": tweet["id_str"], "annotation": i, "tag": common.settings.annotate.getstring("Tag")}
+        common.mongo.annotations_collection.update_one({"id_str": annotation["id_str"]}, {"$set": annotation},
                                                        upsert=True)
+        self._update_tweet()
 
     def key_released(self, _, event_key):
         if event_key.keyval in (Gdk.KEY_N, Gdk.KEY_n):
-            self.next_button.emit("activate")
             self.next_button_pressed(None)
         elif event_key.keyval in (Gdk.KEY_p, Gdk.KEY_P):
-            self.previous_button.emit("activate")
             self.previous_button_pressed(None)
-        elif 0 <= event_key.keyval - Gdk.KEY_1 <= self.annotate_range:
-            self.annotation_buttons[event_key.keyval - Gdk.KEY_1].emit("activate")
+        elif 0 <= event_key.keyval - Gdk.KEY_1 < self.annotate_range:
             self.annotate_button_pressed(None, event_key.keyval - Gdk.KEY_0)
 
     def do_activate(self):
