@@ -12,19 +12,19 @@ import network
 def add_tweet_vertices(graph):
     print("adding tweet nodes")
     for i in tqdm(range(len(network.tweets))):
-        graph.add_node(network.tweets[i]["id_str"], index=i, tweet=True, score=0)
+        graph.add_node(network.tweets[i]["id_str"], index=i, label="tweet", score=0)
 
 
 def add_user_vertices(graph):
     print("adding user nodes")
     for i in tqdm(range(len(network.users))):
-        graph.add_node(network.users[i]["id_str"], index=i, user=True, score=0)
+        graph.add_node(network.users[i]["id_str"], index=i, label="user", score=0)
 
 
 def add_doc_vertices(graph):
     print("adding doc nodes")
     for i in tqdm(range(len(network.docs))):
-        graph.add_node(network.docs[i]["id_str"], index=i, doc=True, score=0)
+        graph.add_node(network.docs[i]["id_str"], index=i, label="doc", score=0)
 
 
 def add_tweet_tweet_edges(graph, threshold):

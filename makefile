@@ -14,6 +14,7 @@ load_sample:
 assemble:
 	python3 -m fetch.assemble
 	mongo vegas --eval 'db.tweets.createIndex({"timestamp_ms" : 1})'
+	mongo vegas --eval 'db.tweets.createIndex({"hour" : 1})'
 
 download:
 	python3 -m fetch.download

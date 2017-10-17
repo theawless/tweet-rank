@@ -19,12 +19,17 @@ def get_full_tweets(limit=0):
     return full_tweets_collection.find(limit=limit)
 
 
-def get_tweets(sort=True, limit=0):
+def get_tweets(sort=True, hour=-1, limit=0):
     print("getting tweets")
     if sort:
-        tweets_cursor = tweets_collection.find(limit=limit, sort=[("timestamp_ms", pymongo.ASCENDING)])
+        sort_list = [("timestamp_ms", pymongo.ASCENDING)]
     else:
-        tweets_cursor = tweets_collection.find(limit=limit)
+        sort_list = []
+    if hour != -1:
+        find_dict = {"hour": hour}
+    else:
+        find_dict = {}
+    tweets_cursor = tweets_collection.find(find_dict, limit=limit, sort=sort_list)
     return list(tweets_cursor)
 
 

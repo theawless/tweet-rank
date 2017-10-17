@@ -55,17 +55,18 @@ def main():
     print("making individual graphs")
     t2t_graph, u2u_graph, d2d_graph = make_graphs()
     homo(t2t_graph, u2u_graph, d2d_graph)
-    print_results(network.utils.graph_results(t2t_graph))
 
     print("merging individual graphs")
     graph = networkx.union(networkx.union(t2t_graph, u2u_graph), d2d_graph)
     hetero(graph)
-    print_results(network.utils.graph_results(graph))
+    show_results(graph)
 
 
-def print_results(scores):
-    for text, score in scores:
+def show_results(graph):
+    for text, score in network.utils.compute_tweet_results(graph):
         print(text, format(score, '.32f'))
+    for tag, gain in network.utils.compute_ndcg_at_k(graph, 10):
+        print(tag, format(gain, '.32f'))
 
 
 if __name__ == '__main__':
