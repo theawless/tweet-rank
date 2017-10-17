@@ -36,6 +36,7 @@ full.read("data/config.ini")
 
 network = full["Network"]
 mongo = full["Mongo"]
+neo4j = full["Neo4j"]
 clean = full["Clean"]
 annotate = full["Annotate"]
 download = full["Download"]

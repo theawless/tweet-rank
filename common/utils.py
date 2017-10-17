@@ -8,6 +8,9 @@ import numpy
 import scipy.sparse
 import sklearn.feature_extraction.text
 
+import common.neo4j
+import common.settings
+
 
 def compute_similarity_matrix(items):
     vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(tokenizer=tokenize_text,
@@ -36,9 +39,11 @@ def tokenize_text(text):
 os.makedirs("data/pickle/", exist_ok=True)
 
 
-def save_graph(graph, name):
+def save_graph(graph, name, ):
     print("saving graph", name)
     networkx.write_gpickle(graph, "data/pickle/" + name + ".pickle")
+    if common.settings.neo4j.getboolean("CreateNeo4jGraph"):
+        common.neo4j.write_neo(graph.nodes(data=True), graph.edges(data=True))
 
 
 def read_graph(name):

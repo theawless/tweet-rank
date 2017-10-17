@@ -1,6 +1,6 @@
 install:
 	pip3 install --user --upgrade pip
-	pip3 install --user --upgrade pymongo autopep8 tqdm
+	pip3 install --user --upgrade pymongo py2neo autopep8 tqdm
 	pip3 install --user --upgrade twarc
 
 	pip3 install --user --upgrade networkx matplotlib scipy scikit-learn

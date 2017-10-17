@@ -2,8 +2,10 @@ import pymongo
 
 import common.settings
 
-client = pymongo.MongoClient(common.settings.mongo.getstring("Host"),
-                             common.settings.mongo.getint("Port"))
+client = pymongo.MongoClient(host=common.settings.mongo.getstring("Host"),
+                             port=common.settings.mongo.getint("Port"),
+                             username=common.settings.mongo.getstring("Username") or None,
+                             password=common.settings.mongo.getstring("Password") or None)
 database = client[common.settings.mongo.getstring("Database")]
 
 full_tweets_collection = database[common.settings.mongo.getstring("FullTweetsCollection")]
@@ -21,14 +23,8 @@ def get_full_tweets(limit=0):
 
 def get_tweets(sort=True, hour=-1, limit=0):
     print("getting tweets")
-    if sort:
-        sort_list = [("timestamp_ms", pymongo.ASCENDING)]
-    else:
-        sort_list = []
-    if hour != -1:
-        find_dict = {"hour": hour}
-    else:
-        find_dict = {}
+    sort_list = [("timestamp_ms", pymongo.ASCENDING)] if sort else []
+    find_dict = {"hour": hour} if hour != -1 else {}
     tweets_cursor = tweets_collection.find(find_dict, limit=limit, sort=sort_list)
     return list(tweets_cursor)
 
