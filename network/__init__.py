@@ -1,3 +1,4 @@
+import common.mongo
 import common.utils
 
 tweets = common.mongo.get_tweets()

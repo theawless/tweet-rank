@@ -36,13 +36,12 @@ def tokenize_text(text):
     return words
 
 
-os.makedirs("data/pickle/", exist_ok=True)
-
-
-def save_graph(graph, name, ):
+def save_graph(graph, name, iteration):
     print("saving graph", name)
-    networkx.write_gpickle(graph, "data/pickle/" + name + ".pickle")
-    if common.settings.neo4j.getboolean("CreateNeo4jGraph"):
+    if common.settings.network.getboolean("PickleSaveGraph"):
+        os.makedirs("data/pickle/", exist_ok=True)
+        networkx.write_gpickle(graph, "data/pickle/" + str(iteration) + "_" + name + ".pickle")
+    if common.settings.network.getint("CreateNeo4jGraphAtIteration") == iteration:
         common.neo4j.write_neo(graph.nodes(data=True), graph.edges(data=True))
 
 
