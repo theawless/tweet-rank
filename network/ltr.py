@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from geopy.distance import great_circle
 from pymongo import MongoClient
 
 
@@ -13,6 +14,9 @@ client = MongoClient()
 db = client['vegas']
 
 EVENT_TIME = 0
+EVENT_COORDINATE = (36.11470649999999, 115.17284840000002)	
+DIST_THRESHOLD = 10 # in km
+	
 
 def tweet_length(tweet):
 	return len(tweet['text'])
@@ -105,10 +109,14 @@ def is_quoted_status(tweet):
 	return 'quoted_status_id' in tweet
 
 
-# If near tweet posted near event location
+# If tweet posted near event location
 # None if coordinates not in tweet
 def vicinity_of_event(tweet):
-	pass
+	if 'coordinates' not in tweet:
+		return None
+
+	tweet_coord = (tweet['coordinates'][0], tweet['coordinates'][1])
+	return great_circle(tweet_coord, EVENT_COORDINATE).km < DIST_THRESHOLD
 
 
 def days_since_join(tweet):
@@ -140,7 +148,7 @@ def extract_features(tweet):
 		'id': tweet['id_str'],
 		'score': tweet['score'],
 		'tweet_length': tweet_length(tweet),
-		'is_reply': tweet_is_retweet(tweet)
+		'is_reply': is_retweet(tweet)
 	}
 
 
