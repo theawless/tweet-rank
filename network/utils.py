@@ -86,8 +86,8 @@ def compute_tweet_results(graph, top=20, redundancy=0.75):
             break
         similarities = []
         for last_tweet_index in range(tweet_index):
-            similarities.append(network.tweets_similarity_matrix[tweet_nodes[tweet_index]["index"],
-                                                                 tweet_nodes[last_tweet_index]["index"]])
+            similarities.append(network.t2t_similarity_matrix[tweet_nodes[tweet_index]["index"],
+                                                              tweet_nodes[last_tweet_index]["index"]])
         if all(similarity < redundancy for similarity in similarities):
             top_non_redundant_results.append([network.tweets[tweet_nodes[tweet_index]["index"]]["text"],
                                               tweet_nodes[tweet_index]["score"]])
@@ -104,9 +104,9 @@ def compute_ndcg_at_k(graph, k=10):
             annotations_scores[annotation["tag"]].append(annotation)
     ndcgs = {}
     for tag in annotations_scores.keys():
-        annotations_scores[tag] = sorted(annotations_scores[tag], reverse=True, key=lambda x: x["score"])[:k]
-        dcg = common.utils.compute_dcg([x["annotation"] for x in annotations_scores[tag]])
+        annotations_scores[tag] = sorted(annotations_scores[tag], reverse=True, key=lambda x: x["score"])
+        dcg = common.utils.compute_dcg([x["annotation"] for x in annotations_scores[tag][:k]])
         annotations_scores[tag] = sorted(annotations_scores[tag], reverse=True, key=lambda x: x["annotation"])
-        idcg = common.utils.compute_dcg([x["annotation"] for x in annotations_scores[tag]])
+        idcg = common.utils.compute_dcg([x["annotation"] for x in annotations_scores[tag][:k]])
         ndcgs[tag] = dcg / idcg
     return ndcgs.items()
