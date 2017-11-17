@@ -1,7 +1,3 @@
-import numpy
-import scipy.sparse
-import sklearn.feature_extraction.text
-import sklearn.metrics.pairwise
 from tqdm import tqdm
 
 import common.tweets
@@ -29,17 +25,17 @@ def add_doc_vertices(graph):
 
 def add_tweet_tweet_edges(graph, threshold):
     print("adding tweet tweet nodes")
-    for r, c in tqdm(zip(*(network.tweets_similarity_matrix > threshold).nonzero())):
+    for r, c in tqdm(zip(*(network.t2t_similarity_matrix > threshold).nonzero())):
         if r != c:
-            w = network.tweets_similarity_matrix[r, c]
+            w = network.t2t_similarity_matrix[r, c]
             graph.add_edge(network.tweets[r]["id_str"], network.tweets[c]["id_str"], label="similarity", weight=w)
 
 
 def add_doc_doc_edges(graph, threshold):
     print("adding doc doc edges")
-    for r, c in tqdm(zip(*(network.docs_similarity_matrix > threshold).nonzero())):
+    for r, c in tqdm(zip(*(network.d2d_similarity_matrix > threshold).nonzero())):
         if r != c:
-            w = network.docs_similarity_matrix[r, c]
+            w = network.d2d_similarity_matrix[r, c]
             graph.add_edge(network.docs[r]["id_str"], network.docs[c]["id_str"], label="similarity", weight=w)
 
 
@@ -94,7 +90,7 @@ def add_tweet_user_edges(graph, threshold):
         for user_i_id_str, tweet_indexes in user_tweet_index_dict.items():
             if tweet_j["user"]["id_str"] == user_i_id_str:
                 continue
-            similarity = max(network.tweets_similarity_matrix[tweet_j_index, tweet_i_index]
+            similarity = max(network.t2t_similarity_matrix[tweet_j_index, tweet_i_index]
                              for tweet_i_index in tweet_indexes)
             if similarity > threshold:
                 tweet_j_id_str = tweet_j["id_str"]
@@ -104,27 +100,7 @@ def add_tweet_user_edges(graph, threshold):
 
 def add_doc_tweet_edges(graph, threshold):
     print("adding doc tweet edges")
-    tweet_texts = (tweet['text'] for tweet in network.tweets)
-
-    tfidf_transformer = sklearn.feature_extraction.text.TfidfTransformer()
-    vectorizer = sklearn.feature_extraction.text.CountVectorizer(tokenizer=common.utils.tokenize_text,
-                                                                 stop_words='english')
-    tweets_matrix = vectorizer.fit_transform(tweet_texts)
-    tfidf_transformer.fit(tweets_matrix)
-    tfidf_transformer.transform(tweets_matrix)
-
-    results = []
-    for doc in tqdm(network.docs):
-        doc_vector = vectorizer.transform([doc['text']])
-        tfidf_transformer.fit(doc_vector)
-        tfidf_doc = tfidf_transformer.transform(doc_vector)
-
-        result = numpy.array([numpy.asscalar(s) for s in sklearn.metrics.pairwise.cosine_similarity(tweets_matrix,
-                                                                                                    tfidf_doc)])
-        results.append(result)
-
-    doc_tweet_matrix = scipy.sparse.csr_matrix(results)
-    for r, c in zip(*(doc_tweet_matrix > threshold).nonzero()):
-        w = doc_tweet_matrix[r, c]
+    for r, c in zip(*(network.t2d_similarity_matrix > threshold).nonzero()):
+        w = network.t2d_similarity_matrix[r, c]
         graph.add_edge(network.docs[r]["id_str"], network.tweets[c]["id_str"], label="similarity", weight=w)
         graph.add_edge(network.tweets[c]["id_str"], network.docs[r]["id_str"], label="similarity", weight=w)
