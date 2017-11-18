@@ -2,6 +2,9 @@ import collections
 import random
 import time
 
+import geopy.distance
+
+import common.settings
 import common.utils
 
 millisecond_in_hour = 60 * 60 * 1000
@@ -56,6 +59,16 @@ def chunk_by_time(tweets, interval=1, sampled=1):
         right_tweet_index = int(len(buckets[bucket_index]) * sampled)
         buckets[bucket_index] = buckets[bucket_index][:right_tweet_index]
     return buckets
+
+
+def vicinity_of_event(tweet):
+    if "coordinates" not in tweet:
+        return None
+
+    tweet_coord = (tweet["coordinates"][0], tweet["coordinates"][1])
+    event_location = common.settings.network.getfloatlist("EventLocation")
+    distance = geopy.distance.great_circle(tweet_coord, event_location).km
+    return distance < common.settings.network.getfloat("GeoSignalRadius")
 
 
 # not sure if we should add plurals

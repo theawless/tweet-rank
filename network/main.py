@@ -8,9 +8,11 @@ import network.connect
 import network.utils
 
 tt_ts = common.settings.network.getfloatlist("TweetTweetThreshold")
+tst_fs = common.settings.network.getfloatlist("TweetSimilarityTweetFactor")
 dd_ts = common.settings.network.getfloatlist("DocDocThreshold")
 tu_ts = common.settings.network.getfloatlist("TweetUserThreshold")
 dt_ts = common.settings.network.getfloatlist("DocTweetThreshold")
+tdtc_fs = common.settings.network.getfloatlist("TweetDocTweetCommonFactor")
 ut_ls = common.settings.network.getfloatlist("LambdaUserTweet")
 tu_ls = common.settings.network.getfloatlist("LambdaTweetUser")
 dt_ls = common.settings.network.getfloatlist("LambdaDocTweet")
@@ -18,15 +20,20 @@ td_ls = common.settings.network.getfloatlist("LambdaTweetDoc")
 
 
 def make_settings(i):
-    ts = {"tt": tt_ts[i] if len(tt_ts) > i else tt_ts[-1],
-          "dd": dd_ts[i] if len(dd_ts) > i else dd_ts[-1],
-          "tu": tu_ts[i] if len(tu_ts) > i else tu_ts[-1],
-          "dt": dt_ts[i] if len(dt_ts) > i else dt_ts[-1]}
-    ls = {"ut": ut_ls[i] if len(ut_ls) > i else ut_ls[-1],
-          "tu": tu_ls[i] if len(tu_ls) > i else tu_ls[-1],
-          "dt": dt_ls[i] if len(dt_ls) > i else dt_ls[-1],
-          "td": td_ls[i] if len(td_ls) > i else td_ls[-1]}
-    return ts, ls
+    def i_or_last(l):
+        return l[i] if len(l) > i else l[-1]
+
+    ts = {"tt": i_or_last(tt_ts),
+          "dd": i_or_last(dd_ts),
+          "tu": i_or_last(tu_ts),
+          "dt": i_or_last(dt_ts)}
+    fs = {"tst": i_or_last(tst_fs),
+          "tdtc": i_or_last(tdtc_fs)}
+    ls = {"ut": i_or_last(ut_ls),
+          "tu": i_or_last(tu_ls),
+          "dt": i_or_last(dt_ls),
+          "td": i_or_last(td_ls)}
+    return ts, fs, ls
 
 
 def make_graphs():
@@ -41,8 +48,8 @@ def make_graphs():
     return t2t_graph, u2u_graph, d2d_graph
 
 
-def homo(t2t_graph, u2u_graph, d2d_graph, ts):
-    network.connect.add_tweet_tweet_edges(t2t_graph, ts["tt"])
+def homo(t2t_graph, u2u_graph, d2d_graph, ts, fs):
+    network.connect.add_tweet_tweet_edges(t2t_graph, ts["tt"], fs["tst"])
     print("computing t2t graph pagerank")
     network.utils.compute_pagerank(t2t_graph)
 
@@ -55,23 +62,23 @@ def homo(t2t_graph, u2u_graph, d2d_graph, ts):
     network.utils.compute_pagerank(d2d_graph)
 
 
-def hetero(graph, ts, ls):
+def hetero(graph, ts, fs, ls):
+    network.connect.add_doc_tweet_edges(graph, ts["dt"], fs["tdtc"])
     network.connect.add_tweet_user_edges(graph, ts["tu"])
-    network.connect.add_doc_tweet_edges(graph, ts["dt"])
     network.utils.compute_trihits(graph, ls)
 
 
 def main():
     for i in range(common.settings.network.getint("Iterations")):
-        ts, ls = make_settings(i)
+        ts, fs, ls = make_settings(i)
 
         print("making individual graphs")
         t2t_graph, u2u_graph, d2d_graph = make_graphs()
-        homo(t2t_graph, u2u_graph, d2d_graph, ts)
+        homo(t2t_graph, u2u_graph, d2d_graph, ts, fs)
 
         print("merging individual graphs")
         graph = networkx.union(networkx.union(t2t_graph, u2u_graph), d2d_graph)
-        hetero(graph, ts, ls)
+        hetero(graph, ts, fs, ls)
 
         common.utils.save_graph(graph, "tweet-user-doc graph", i)
         show_results(graph, i)
