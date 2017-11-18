@@ -1,3 +1,5 @@
+import os
+
 import networkx
 
 import common.settings
@@ -82,17 +84,23 @@ def main():
         hetero(graph, ts, ls)
 
         common.utils.save_graph(graph, "tweet-user-doc graph", i)
-        show_results(graph, i)
+        write_results(graph, i)
 
 
-def show_results(graph, iteration):
-    print("##" * 10, iteration, "##" * 10)
-    for text, score in network.utils.compute_tweet_results(graph):
-        print("tweet-score:", format(score, '.32f'), "tweet-text:", text)
-        print()
-    for tag, gain in network.utils.compute_ndcg_at_k(graph, 10):
-        print("ndcg-score:", format(gain, '.32f'), "tag:", tag)
-        print()
+def write_results(graph, iteration):
+    os.makedirs("data/output/", exist_ok=True)
+    with open("data/output/" + str(iteration), "w+") as file:
+        lines = []
+        for text, score in network.utils.compute_tweet_results(graph):
+            lines.append("tweet-score: " + format(score, '.32f') + " tweet-text: " + text + "\n")
+        lines.append("\n")
+        file.writelines(lines)
+    with open("data/output/all", "a+") as file:
+        lines = ["iteration no: " + str(iteration) + "\n"]
+        for tag, gain in network.utils.compute_ndcg_at_k(graph, 10):
+            lines.append("ndcg-score: " + format(gain, '.32f') + " tag: " + tag + "\n")
+        lines.append("\n")
+        file.writelines(lines)
 
 
 if __name__ == '__main__':
