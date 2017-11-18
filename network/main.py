@@ -11,6 +11,7 @@ import network.utils
 
 tt_ts = common.settings.network.getfloatlist("TweetTweetThreshold")
 tst_fs = common.settings.network.getfloatlist("TweetSimilarityTweetFactor")
+tgt_fs = common.settings.network.getfloatlist("GeoSignalRadius")
 dd_ts = common.settings.network.getfloatlist("DocDocThreshold")
 tu_ts = common.settings.network.getfloatlist("TweetUserThreshold")
 dt_ts = common.settings.network.getfloatlist("DocTweetThreshold")
@@ -30,6 +31,7 @@ def make_settings(i):
           "tu": i_or_last(tu_ts),
           "dt": i_or_last(dt_ts)}
     fs = {"tst": i_or_last(tst_fs),
+          "tgt": i_or_last(tgt_fs),
           "tdtc": i_or_last(tdtc_fs)}
     ls = {"ut": i_or_last(ut_ls),
           "tu": i_or_last(tu_ls),
@@ -51,7 +53,8 @@ def make_graphs():
 
 
 def homo(t2t_graph, u2u_graph, d2d_graph, ts, fs):
-    network.connect.add_tweet_tweet_edges(t2t_graph, ts["tt"], fs["tst"], fs["tdtc"])
+    network.connect.add_tweet_tweet_edges(t2t_graph, ts["tt"], fs["tst"])
+    network.connect.add_tweet_tweet_geo_signals(t2t_graph, fs["tgt"], ts["tst"], ts["tdtc"])
     network.connect.add_tweet_doc_tweet_common_edges(t2t_graph, d2d_graph, ts["dt"], fs["tdtc"])
     print("computing t2t graph pagerank")
     network.utils.compute_pagerank(t2t_graph)

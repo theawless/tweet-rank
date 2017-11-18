@@ -14,7 +14,9 @@ from tqdm import tqdm
 import common.neo4j
 import common.settings
 
-if common.settings.network.getstring("SimilarityMeasure") == "word2vec":
+if (common.settings.network.getstring("TweetTweetSimilarityMeasure") == "word2vec" or
+            common.settings.network.getstring("DocDocSimilarityMeasure") == "word2vec" or
+            common.settings.network.getstring("DocTweetSimilarityMeasure") == "word2vec"):
     print('Loading Word2Vec Embeddings')
     word2vec_model = gensim.models.KeyedVectors.load_word2vec_format('data/GoogleNews-vectors-negative300.bin.gz',
                                                                      binary=True,

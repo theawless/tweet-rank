@@ -24,18 +24,20 @@ def add_doc_vertices(graph):
         graph.add_node(network.docs[i]["id_str"], index=i, label="doc", score=0)
 
 
-def add_tweet_tweet_edges(graph, similarity_threshold, tweets_similarity_factor, common_neighbour_factor):
-    print("adding tweet tweet nodes")
+def add_tweet_tweet_edges(graph, similarity_threshold, tweets_similarity_factor):
+    print("adding tweet tweet edges")
     for r, c in tqdm(zip(*(network.t2t_similarity_matrix > similarity_threshold).nonzero())):
         if r != c:
             w = tweets_similarity_factor * network.t2t_similarity_matrix[r, c]
             graph.add_edge(network.tweets[r]["id_str"], network.tweets[c]["id_str"], label="similarity", weight=w)
 
-    # geo signals
+
+def add_tweet_tweet_geo_signals(graph, vicinity_radius, tweets_similarity_factor, common_neighbour_factor):
+    print("adding geo signals")
     for i in range(len(network.tweets)):
         for j in range(i + 1):
-            if (common.tweets.vicinity_of_event(network.tweets[i]) and
-                    common.tweets.vicinity_of_event(network.tweets[j])):
+            if (common.tweets.vicinity_of_event(network.tweets[i], vicinity_radius) and
+                    common.tweets.vicinity_of_event(network.tweets[j], vicinity_radius)):
                 v = 1 - tweets_similarity_factor - common_neighbour_factor
                 t1_id_str, t2_id_str = network.tweets[i]["id_str"], network.tweets[j]["id_str"]
                 if not graph.has_edge(t1_id_str, t2_id_str):

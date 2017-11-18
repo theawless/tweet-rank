@@ -61,14 +61,14 @@ def chunk_by_time(tweets, interval=1, sampled=1):
     return buckets
 
 
-def vicinity_of_event(tweet):
+def vicinity_of_event(tweet, radius):
     if "coordinates" not in tweet:
         return None
 
-    tweet_coord = (tweet["coordinates"][0], tweet["coordinates"][1])
+    tweet_coordinates = (tweet["coordinates"][0], tweet["coordinates"][1])
     event_location = common.settings.network.getfloatlist("EventLocation")
-    distance = geopy.distance.great_circle(tweet_coord, event_location).km
-    return distance < common.settings.network.getfloat("GeoSignalRadius")
+    distance = geopy.distance.great_circle(tweet_coordinates, event_location).km
+    return distance < radius
 
 
 # not sure if we should add plurals
