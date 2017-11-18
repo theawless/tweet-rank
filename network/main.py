@@ -49,7 +49,8 @@ def make_graphs():
 
 
 def homo(t2t_graph, u2u_graph, d2d_graph, ts, fs):
-    network.connect.add_tweet_tweet_edges(t2t_graph, ts["tt"], fs["tst"])
+    network.connect.add_tweet_tweet_edges(t2t_graph, ts["tt"], fs["tst"], fs["tdtc"])
+    network.connect.add_tweet_doc_tweet_common_edges(t2t_graph, d2d_graph, ts["dt"], fs["tdtc"])
     print("computing t2t graph pagerank")
     network.utils.compute_pagerank(t2t_graph)
 
@@ -62,8 +63,8 @@ def homo(t2t_graph, u2u_graph, d2d_graph, ts, fs):
     network.utils.compute_pagerank(d2d_graph)
 
 
-def hetero(graph, ts, fs, ls):
-    network.connect.add_doc_tweet_edges(graph, ts["dt"], fs["tdtc"])
+def hetero(graph, ts, ls):
+    network.connect.add_doc_tweet_edges(graph, ts["dt"])
     network.connect.add_tweet_user_edges(graph, ts["tu"])
     network.utils.compute_trihits(graph, ls)
 
@@ -78,7 +79,7 @@ def main():
 
         print("merging individual graphs")
         graph = networkx.union(networkx.union(t2t_graph, u2u_graph), d2d_graph)
-        hetero(graph, ts, fs, ls)
+        hetero(graph, ts, ls)
 
         common.utils.save_graph(graph, "tweet-user-doc graph", i)
         show_results(graph, i)
