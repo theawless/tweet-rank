@@ -1,4 +1,3 @@
-import networkx
 from tqdm import tqdm
 
 import common.tweets
@@ -24,50 +23,50 @@ def add_doc_vertices(graph):
         graph.add_node(network.docs[i]["id_str"], index=i, label="doc", score=0)
 
 
-def add_tweet_tweet_edges(graph, similarity_threshold, tweets_similarity_factor):
+def add_tweet_tweet_edges(graph, similarity_threshold, geo_signal_factor, common_neighbour_factor):
     print("adding tweet tweet edges")
     for r, c in tqdm(zip(*(network.t2t_similarity_matrix > similarity_threshold).nonzero())):
         if r != c:
-            w = tweets_similarity_factor * network.t2t_similarity_matrix[r, c]
+            w = (1 - geo_signal_factor - common_neighbour_factor) * network.t2t_similarity_matrix[r, c]
             graph.add_edge(network.tweets[r]["id_str"], network.tweets[c]["id_str"], label="similarity", weight=w)
 
 
-def add_tweet_tweet_geo_signals(graph, vicinity_radius, tweets_similarity_factor, common_neighbour_factor):
+def add_tweet_tweet_geo_signals(graph, geo_signal_factor, vicinity_radius):
     print("adding geo signals")
     for i in range(len(network.tweets)):
         for j in range(i + 1):
             if (common.tweets.vicinity_of_event(network.tweets[i], vicinity_radius) and
                     common.tweets.vicinity_of_event(network.tweets[j], vicinity_radius)):
-                v = 1 - tweets_similarity_factor - common_neighbour_factor
                 t1_id_str, t2_id_str = network.tweets[i]["id_str"], network.tweets[j]["id_str"]
                 if not graph.has_edge(t1_id_str, t2_id_str):
                     graph.add_edge(t1_id_str, t2_id_str, label="", weight=0)
                     graph.add_edge(t2_id_str, t1_id_str, label="", weight=0)
                 graph[t1_id_str][t2_id_str]["label"] += "geo"
                 graph[t2_id_str][t1_id_str]["label"] += "geo"
-                graph[t1_id_str][t2_id_str]["weight"] += v
-                graph[t2_id_str][t1_id_str]["weight"] += v
+                graph[t1_id_str][t2_id_str]["weight"] += geo_signal_factor
+                graph[t2_id_str][t1_id_str]["weight"] += geo_signal_factor
 
 
-def add_tweet_doc_tweet_common_edges(t2t_graph, d2d_graph, similarity_threshold, common_neighbour_factor):
+def add_tweet_doc_tweet_common_edges(graph, similarity_threshold, common_neighbour_factor):
     print("adding tweet tweet edges between tweets with common doc neighbour")
-    # hack! do not save these edges to graph because the graph is still homogeneous at this step
-    dt_graph = networkx.union(t2t_graph, d2d_graph)
-    add_doc_tweet_edges(dt_graph, similarity_threshold)
 
-    # doc to doc edges have not been made yet, hence all neighbours of docs are tweets
-    for i in range(len(network.docs)):
-        d_id_str = network.docs[i]["id_str"]
-        for t1_id_str in dt_graph.neighbors(d_id_str):
-            for t2_id_str in dt_graph.neighbors(d_id_str):
-                if t1_id_str != t2_id_str:
-                    w1 = dt_graph[d_id_str][t1_id_str]["weight"]
-                    w2 = dt_graph[d_id_str][t2_id_str]["weight"]
-                    v = common_neighbour_factor * (w1 * w2) / (w1 + w2)
-                    if not t2t_graph.has_edge(t1_id_str, t2_id_str):
-                        t2t_graph.add_edge(t1_id_str, t2_id_str, label="", weight=0)
-                    t2t_graph[t1_id_str][t2_id_str]["label"] += "common"
-                    t2t_graph[t1_id_str][t2_id_str]["weight"] += v
+    doc_tweets = {}
+    for r, c in zip(*(network.t2d_similarity_matrix > similarity_threshold).nonzero()):
+        if network.docs[r]["id_str"] not in doc_tweets:
+            doc_tweets[network.docs[r]["id_str"]] = []
+        doc_tweets[network.docs[r]["id_str"]].append(network.tweets[c]["id_str"])
+
+    for doc, tweets in doc_tweets:
+        for tweet1 in tweets:
+            for tweet2 in tweets:
+                if not graph.has_edge(tweet1, tweet2):
+                    graph.add_edge(tweet1, tweet2, label="common", weight=common_neighbour_factor)
+                    graph.add_edge(tweet2, tweet1, label="common", weight=common_neighbour_factor)
+                elif "common" not in graph[tweet1][tweet2]["label"]:
+                    graph[tweet1][tweet2]["label"] += "common"
+                    graph[tweet2][tweet1]["label"] += "common"
+                    graph[tweet1][tweet2]["weight"] += common_neighbour_factor
+                    graph[tweet2][tweet1]["weight"] += common_neighbour_factor
 
 
 def add_doc_doc_edges(graph, threshold):
