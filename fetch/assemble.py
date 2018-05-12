@@ -15,16 +15,25 @@ def _save_tweets_from_full_tweets(tweets):
             continue
 
         if tweet["id_str"] not in tweets_dict:
-            fetch.utils.clean_tweet(tweet)
-            tweets_dict[tweet["id_str"]] = tweet
+            # fetch.utils.clean_tweet(tweet)
+            if "timestamp_ms" not in tweet:
+                tweet["timestamp_ms"] = str(common.tweets.time_to_timestamp(tweet["created_at"]))
+            if "full_text" in tweet:
+                tweet["text"] = tweet["full_text"]
+            if "text" in tweet and "coordinates" in tweet:
+                tweets_dict[tweet["id_str"]] = tweet
 
         # retweet
         if "retweeted_status" in tweet:
             retweet = tweet["retweeted_status"]
             if retweet["id_str"] not in tweets_dict:
-                retweet["timestamp_ms"] = str(common.tweets.time_to_timestamp(retweet["created_at"]))
-                fetch.utils.clean_tweet(retweet)
-                tweets_dict[retweet["id_str"]] = retweet
+                if "timestamp_ms" not in retweet:
+                    retweet["timestamp_ms"] = str(common.tweets.time_to_timestamp(retweet["created_at"]))
+                # fetch.utils.clean_tweet(retweet)
+                if "full_text" in retweet:
+                    retweet["text"] = retweet["full_text"]
+                if "text" in retweet and "coordinates" in retweet and retweet["coordinates"] != "":
+                    tweets_dict[retweet["id_str"]] = retweet
 
     tweets_sorted_with_timestamp = sorted(list(tweets_dict.values()), key=lambda e: e["timestamp_ms"])
     sampled_tweets_chunks = common.tweets.chunk_by_time(tweets_sorted_with_timestamp,
@@ -46,13 +55,13 @@ def _save_users_from_tweets(tweets):
     for tweet in tqdm(tweets):
         # author
         user = tweet["user"]
-        fetch.utils.clean_user(user)
+        # fetch.utils.clean_user(user)
         users_dict[user["id_str"]] = user
 
         # retweet
         if "retweeted_status" in tweet:
             user = tweet["retweeted_status"]["user"]
-            fetch.utils.clean_user(user)
+            # fetch.utils.clean_user(user)
             users_dict[user["id_str"]] = user
 
         # reply
@@ -97,9 +106,9 @@ def _save_urls_from_tweets(tweets):
 
 def assemble():
     print("assembling")
-    _save_tweets_from_full_tweets(common.mongo.get_full_tweets())
+    _save_tweets_from_full_tweets(common.mongo.get_full_tweets(limit=1000))
     _save_users_from_tweets(common.mongo.get_tweets(False))
-    _save_urls_from_tweets(common.mongo.get_tweets(False))
+    # _save_urls_from_tweets(common.mongo.get_tweets(False))
 
 
 if __name__ == '__main__':

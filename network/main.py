@@ -101,9 +101,15 @@ def write_results(graph, iteration):
     with open("data/output/all", "a+") as file:
         lines = ["iteration no: " + str(iteration) + "\n"]
         for tag, gain in network.utils.compute_ndcg_at_k(graph, 10):
-            lines.append("ndcg-score: " + format(gain, '.32f') + " tag: " + tag + "\n")
+            lines.append("ndcg-score@10: " + format(gain, '.32f') + " tag: " + tag + "\n")
+        for tag, gain in network.utils.compute_ndcg_at_k(graph, 100):
+            lines.append("ndcg-score@100: " + format(gain, '.32f') + " tag: " + tag + "\n")
         lines.append("\n")
         file.writelines(lines)
+
+    tweets = network.utils.get_results(graph)
+    from network.ltr import evaluate
+    evaluate(tweets)
 
 
 if __name__ == '__main__':

@@ -63,7 +63,11 @@ def chunk_by_time(tweets, interval=1, sampled=1):
 
 def vicinity_of_event(tweet, radius):
     if "coordinates" not in tweet:
-        return None
+        return False
+    try:
+        tweet["coordinates"][0]
+    except Exception:
+        return False
 
     tweet_coordinates = (tweet["coordinates"][0], tweet["coordinates"][1])
     event_location = common.settings.network.getfloatlist("EventLocation")

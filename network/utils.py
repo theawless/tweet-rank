@@ -94,7 +94,20 @@ def compute_tweet_results(graph, top=20, redundancy=0.75):
     return top_non_redundant_results
 
 
-def compute_ndcg_at_k(graph, k=10):
+def get_results(graph):
+    tweets = []
+    for tweet in network.tweets:
+        a = common.mongo.annotations_collection.find_one({"id_str": tweet["id_str"]})
+        if a is not None:
+            tweet["score"] = a["annotation"]
+            tweet["score2"] = graph.node[tweet["id_str"]]["score"]
+            tweets.append(tweet)
+
+    tweets = sorted(tweets, reverse=True, key=lambda x: x["score2"])
+    return tweets
+
+
+def compute_ndcg_at_k(graph, k):
     annotations_scores = {}
     for annotation in network.annotations:
         if graph.has_node(annotation["id_str"]):
